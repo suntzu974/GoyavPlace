@@ -18,28 +18,31 @@
     </Page.BottomAppBar>
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Margin="10,10,0,0" TextWrapping="Wrap" Text="GoyavPlace" VerticalAlignment="Top" FontSize="24"/>
-        <ProgressRing x:Name="progress" IsActive="False" Margin="10,5" VerticalAlignment="Top" />
-        <ScrollViewer VerticalScrollMode="Auto">
+        <StackPanel Orientation="Vertical" >
+        <StackPanel Orientation="Horizontal" Margin="0,0,0,0">
+           <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Margin="10,5,0,0" TextWrapping="Wrap" Text="GoyavPlace" VerticalAlignment="Top" FontSize="24" Padding="50,0,0,0"/>
+           <ProgressRing x:Name="progress" IsActive="False" Margin="10,5,10,0" VerticalAlignment="Top" Padding="20,0,0,0" />
+        </StackPanel>
+        <ScrollViewer VerticalScrollMode="Auto" Margin="0,5,0,0">
             <StackPanel Orientation="Vertical">
             <StackPanel Orientation="Horizontal">
-                <TextBox x:Name="PlaceForSearch" Margin="10,53,10,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" PlaceholderText="search place" InputScope="Text" KeyUp="searchPlace" MinWidth="300" MinHeight="32" GotFocus="showCriteria" Visibility="Collapsed"/>
+                <TextBox x:Name="PlaceForSearch" Margin="10,10,10,0" TextWrapping="Wrap" Text="" VerticalAlignment="Top" PlaceholderText="search place" InputScope="Text" KeyUp="searchPlace" MinWidth="300" MinHeight="32" GotFocus="showCriteria" Visibility="Collapsed"/>
             </StackPanel>
             <StackPanel x:Name="searchPanel" Orientation="Vertical" Margin="0">
-                <TextBlock x:Name="displayDistance" Text="Distance" Margin="10,60,10,5"/>
-                <Slider x:Name="searchDistance" Minimum="10" LargeChange="50" Maximum="1000" StepFrequency="10" Value="10" MinWidth="20" Margin="10,5" AutomationProperties.Name="Distance" AutomationProperties.HelpText="Distance" ValueChanged="searchForDistance" />
+                <TextBlock x:Name="displayDistance" Text="Distance" Margin="10,30,10,5"/>
+                <Slider x:Name="searchDistance" Minimum="0" LargeChange="50" Maximum="1000" StepFrequency="1" Value="0" MinWidth="20" Margin="10,5" AutomationProperties.Name="Distance" AutomationProperties.HelpText="Distance" ValueChanged="searchForDistance" />
                 <StackPanel Orientation="Horizontal">
                 <StackPanel Orientation="Vertical" Margin="10,0">
-                    <CheckBox x:Name="searchStation" Content="Place" MinWidth="60" />
-                    <CheckBox x:Name="searchLeisure" Content="Leisure" MinWidth="60" />
+                    <CheckBox x:Name="searchStation" Content="Place" MinWidth="60" IsChecked="True" />
+                    <CheckBox x:Name="searchLeisure" Content="Leisure" MinWidth="60" IsChecked="True" />
                 </StackPanel>
                 <StackPanel Orientation="Vertical" Margin="10,0">
-                    <CheckBox x:Name="searchRestaurant" Content="Restaurant" MinWidth="60" />
-                    <CheckBox x:Name="searchHotel" Content="Hotel" MinWidth="60" />
+                    <CheckBox x:Name="searchRestaurant" Content="Restaurant" MinWidth="60" IsChecked="True" />
+                    <CheckBox x:Name="searchHotel" Content="Hotel" MinWidth="60" IsChecked="True" />
                 </StackPanel>
                 </StackPanel>
             </StackPanel>
-            <StackPanel x:Name="searchList" Orientation="Vertical" Padding="0,30,0,0" >
+            <StackPanel x:Name="searchList" Orientation="Vertical" Padding="0,5,0,0" >
                 <ListView x:Name="placeList" 
                       HorizontalAlignment="Left" 
                     Height="422" Margin="10,10,0,5" 
@@ -57,20 +60,22 @@
                                    <Image x:Name="IMAGE" Source="{Binding Path=Picture.base64Decoded}" Margin="0,0,0,0" Stretch="Fill"/>
                                 </Border>
                                 <StackPanel Grid.Column="1" VerticalAlignment="Top">
-                                     <TextBlock Text="{Binding Path=name}" Margin="0,4,0,0" />
+                                     <TextBlock Text="{Binding Path=name}" Margin="0,1,0,0" />
                                     <TextBlock Text="{Binding Path=Location.address}" />
-                                      <TextBlock Text="{Binding Path=Location.country}" />
+                                    <TextBlock Text="{Binding Path=Location.town}" />
+                                        <StackPanel Orientation="Horizontal">
+                                            <TextBlock Text="{Binding Path=Location.country}" />
+                                            <TextBlock Text="---"/>
+                                            <TextBlock Text="{Binding Path=distance}" />
+                                        </StackPanel>
                                 </StackPanel>
-                                <StackPanel Grid.Column="2" VerticalAlignment="Top">
-                                     <TextBlock Text="{Binding Path=distance}" />
-                                </StackPanel>
-                                </Grid>
+                            </Grid>
                             </DataTemplate>
                     </ListView.ItemTemplate>
                 </ListView>
             </StackPanel>
-            <StackPanel x:Name="StatusPanel" Orientation="Vertical" Margin="0,0,0,0" >
-               <Border x:Name="StatusBorder" Margin="0,0,0,0">
+            <StackPanel x:Name="StatusPanel" Orientation="Vertical" Margin="0,0,0,0" VerticalAlignment="Bottom" >
+               <Border x:Name="StatusBorder" Margin="0,0,0,0" VerticalAlignment="Center">
                    <ScrollViewer VerticalScrollMode="Auto"  VerticalScrollBarVisibility="Auto" MaxHeight="200">
                         <TextBlock x:Name="StatusBlock" FontWeight="Bold" 
                          MaxWidth="{Binding ElementName=Splitter, Path=ActualWidth}" Margin="10,10,10,20" TextWrapping="Wrap"  />
@@ -79,5 +84,6 @@
             </StackPanel>
             </StackPanel>
         </ScrollViewer>
+        </StackPanel>
     </Grid>
 </Page>

@@ -2,6 +2,7 @@
   "dependencies": {
     "Microsoft.NETCore.UniversalWindowsPlatform": "5.1.0",
     "Newtonsoft.Json": "9.0.1",
+    "UniversalBeaconLibrary": "1.8.1",
     "winsdkfb": "0.12.20161020.4"
   },
   "frameworks": {

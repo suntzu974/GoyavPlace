@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
@@ -26,15 +27,44 @@ namespace GoyavPlace
         public string Id { get; set; }
         public string Post_Id { get; set; }
     }
+
     [DataContract]
-    public class ResponseEvaluation
+    public class TweetAuthor
+    {
+        [DataMember(Name = "id")]
+        public int id { get; set; }
+        [DataMember(Name = "api_token")]
+        public string api_token { get; set; }
+    }
+    [DataContract]
+    public class TweetData
+    {
+        [DataMember(Name = "id")]
+        public int id { get; set; }
+        [DataMember(Name = "tweet")]
+        public string tweet { get; set; }
+    }
+    [DataContract]
+    public class Tweet : TweetData
+    {
+        [DataMember(Name = "place_id")]
+        public int place_id { get; set; }
+        [DataMember(Name = "api_key_id")]
+        public int api_key_id { get; set; }
+        [DataMember(Name = "updated_at")]
+        public string updated_at { get; set; }
+        [DataMember(Name ="author")]
+        public TweetAuthor author { get; set; }
+    }
+    [DataContract]
+    public class ResponseTweet
     {
         [DataMember(Name = "success")]
         public string success { get; set; }
         [DataMember(Name = "status")]
         public string status { get; set; }
-        [DataMember(Name = "evaluation")]
-        public Evaluation Evaluation { get; set; }
+        [DataMember(Name = "tweets")]
+        public Tweet[] tweets { get; set; }
     }
 
     /// <summary>
@@ -46,11 +76,66 @@ namespace GoyavPlace
         PlaceData place = new PlaceData();
         Evaluation evaluation = new Evaluation();
         CategoryData category = new CategoryData();
+        Tweet tweet = new Tweet();
+
         public DetailPage()
         {
             this.InitializeComponent();
+            this.likeButton.Visibility = Visibility.Collapsed;
+            this.refreshButton.Visibility = Visibility.Collapsed;
+        }
+
+        private async void getTweets()
+        {
+            noteGrid.Items.Clear();
+            // Search place
+            try
+            {
+                //progress.IsActive = true;
+                //Create HttpClient
+                HttpClient httpClient = new HttpClient();
+                //Define Http Headers
+                httpClient.DefaultRequestHeaders.Accept.TryParseAdd("application/json");
+                String addressForTweets  = string.Format("https://www.goyav.com/api/v2/search_tweets.json?place_id={0}", place.id);
+
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                HttpResponseMessage wcfResponse = await httpClient.GetAsync(addressForTweets);
+                var responseString = await wcfResponse.Content.ReadAsStringAsync();
+                //Replace current URL with your URL
+                ResponseTweet data = JsonConvert.DeserializeObject<ResponseTweet>(responseString);
+                if (data.tweets.Count() > 0)
+                {
+                    noteGrid.Visibility = Visibility.Visible;
+                    foreach (var tweet in data.tweets)
+                    {
+#if DEBUG
+                        System.Diagnostics.Debug.WriteLine("Tweets.tweet !!" + tweet.tweet.ToString());
+#endif
+                        // item.distance = distance(latitude, longitude, item.latitude, item.longitude, 'K');
+                        noteGrid.Items.Add(tweet);
+                    }
+                }
+                else
+                {
+                    // 
+                }
+                if (wcfResponse.IsSuccessStatusCode)
+                {
+                    //progress.IsActive = false;
+                }
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine("GET Response from Tweets !!" + responseString.ToString());
+                System.Diagnostics.Debug.WriteLine("GET Response status code " + wcfResponse.StatusCode);
+#endif
+            }
+
+            catch (Exception ex)
+            {
+                //....
+            }
 
         }
+
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             place = e.Parameter as PlaceData;
@@ -97,6 +182,7 @@ namespace GoyavPlace
                 //logging goes here
                 System.Diagnostics.Debug.WriteLine("Failled to associate object");
             }
+            getTweets();
         }
 
         private async void getDrive(object sender, RoutedEventArgs e)
@@ -507,6 +593,117 @@ namespace GoyavPlace
                     httpClient = null;
                 }
             }
+        }
+
+        private void getIndexFromPivot(object sender, SelectionChangedEventArgs e)
+        {
+            var pivot = this.goyavPivot.SelectedIndex;
+            if (pivot == 0)
+            {
+                System.Diagnostics.Debug.WriteLine("Index Home");
+                this.likeButton.Visibility = Visibility.Collapsed;
+                this.refreshButton.Visibility = Visibility.Collapsed;
+            }
+            if (pivot == 1)
+            {
+                System.Diagnostics.Debug.WriteLine("Index Notes");
+                this.likeButton.Visibility = Visibility.Collapsed;
+                this.refreshButton.Visibility = Visibility.Visible;
+
+            }
+            if (pivot == 2)
+            {
+                System.Diagnostics.Debug.WriteLine("Index Horaires");
+                this.likeButton.Visibility = Visibility.Visible;
+                this.refreshButton.Visibility = Visibility.Collapsed;
+
+            }
+            if (pivot == 3)
+            {
+                System.Diagnostics.Debug.WriteLine("Index Tarif");
+                this.refreshButton.Visibility = Visibility.Collapsed;
+            }
+            if (pivot == 4)
+            {
+                System.Diagnostics.Debug.WriteLine("Index Calendrier");
+                this.refreshButton.Visibility = Visibility.Collapsed;
+
+            }
+
+        }
+
+        private async void sendTweet(object sender, RoutedEventArgs e)
+        {
+            // Send Tweet
+
+            string resourceAddress = String.Empty;
+            // Save item
+            HttpClient httpClient = new HttpClient();
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            if (localSettings.Values.ContainsKey("auth_token"))
+            {
+                //overwrite the value if you need to
+                Object api_token = localSettings.Values["auth_token"];
+                Object api_token_id = localSettings.Values["auth_token_id"];
+                Dictionary<String, Object> TWEET= new Dictionary<String, Object>();
+                tweet.tweet = this.noteText.Text.ToString();
+                tweet.api_key_id = Convert.ToInt16(api_token_id);
+                tweet.place_id = place.id;
+                TWEET["tweet"] = tweet;
+
+                if (tweet.tweet != String.Empty )
+                {
+
+                    string postBody = JsonConvert.SerializeObject(TWEET, Formatting.Indented);
+                    try
+                    {
+                        //overwrite the value if you need to
+                        resourceAddress = string.Format("https://www.goyav.com/api/v2/tweets.json?place_id={0}?api_key_id={1}&tweet{2}", tweet.place_id,tweet.api_key_id,tweet.tweet);
+                        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                        HttpResponseMessage wcfResponse = await httpClient.PostAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
+                        var responseString = await wcfResponse.Content.ReadAsStringAsync();
+                        AddResponse RetResponse = JsonConvert.DeserializeObject<AddResponse>(responseString);
+                        // Navigate to cocktail page with item you click/tap on
+#if DEBUG
+                        System.Diagnostics.Debug.WriteLine("Response String for new tweet " + responseString.ToString());
+#endif
+                        NotifyUser("http response status code ." + wcfResponse.StatusCode, NotifyType.StatusMessage);
+                        if (wcfResponse.IsSuccessStatusCode)
+                        {
+                            // Clean Fields
+                            this.noteText.Text = String.Empty;
+                            getTweets();
+                        }
+                    }
+                    catch (HttpRequestException hre)
+                    {
+                    }
+                    catch (TaskCanceledException)
+                    {
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                    finally
+                    {
+                        if (httpClient != null)
+                        {
+                            httpClient.Dispose();
+                            httpClient = null;
+                        }
+                    }
+                }
+                else
+                {
+                    NotifyUser("all fields must be filled.", NotifyType.ErrorMessage);
+                }
+            }
+
+        }
+
+        private void refreshNotes(object sender, RoutedEventArgs e)
+        {
+            getTweets();
         }
     }
 

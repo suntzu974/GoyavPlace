@@ -221,10 +221,12 @@ namespace GoyavPlace
         }
         private void getPlace(object sender, ItemClickEventArgs e)
         {
+            progress.IsActive = true;
             clicked_place = e.ClickedItem as PlaceData;
             System.Diagnostics.Debug.WriteLine("GET Place " + clicked_place.name.ToString() + " and Location" + clicked_place.Location.address.ToString());
             // Navigate to cocktail page with item you click/tap on
             Frame.Navigate(typeof(DetailPage), e.ClickedItem);
+            progress.IsActive = false;
         }
 
         private void addPlace(object sender, RoutedEventArgs e)
@@ -264,8 +266,15 @@ namespace GoyavPlace
         private void searchForDistance(object sender, Windows.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
         {
             Slider slider = sender as Slider;
-            displayDistance.Text = "Distance : " + slider.Value.ToString("n2") + " M";
             distance_from = (float)slider.Value;
+
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            Object unit = localSettings.Values["unit"];
+            if (!(bool)unit)
+                displayDistance.Text = "Distance : " + slider.Value.ToString("n2") + " M";
+            else
+                displayDistance.Text = "Distance : " + slider.Value.ToString("n2") + " KM";
+
             System.Diagnostics.Debug.WriteLine("distance from !!" + distance_from.ToString());
         }
 
@@ -301,6 +310,7 @@ namespace GoyavPlace
             List<int>  categories = new List<int>();
             double latitude = 0;
             double longitude = 0;
+            String addressForSearch = String.Empty;
             searchPanel.Visibility = Visibility.Collapsed;
             placeList.Visibility = Visibility.Collapsed;
             placeList.Items.Clear();
@@ -315,7 +325,7 @@ namespace GoyavPlace
                     case GeolocationAccessStatus.Allowed:
                         _cts = new CancellationTokenSource();
                         CancellationToken token = _cts.Token;
-                        NotifyUser("Waiting for update...", NotifyType.StatusMessage);
+                        NotifyUser("Waiting for retrieve current location...", NotifyType.StatusMessage);
                         // If DesiredAccuracy or DesiredAccuracyInMeters are not set (or value is 0), DesiredAccuracy.Default is used.
                         Geolocator geolocator = new Geolocator { DesiredAccuracyInMeters = _desireAccuracyInMetersValue };
 
@@ -377,10 +387,18 @@ namespace GoyavPlace
                     httpClient.DefaultRequestHeaders.Accept.TryParseAdd("application/json");
                 //Call
                 //string resourceAddress = string.Format("https://www.goyav.com/api/v2/search_by_name.json?search_by_name={0}", this.PlaceForSearch.Text.ToUpper());
-                string resourceAddress = string.Format("https://www.goyav.com/api/v2/search.json?latitude={0}&longitude={1}&distance={2}&category={3}", latitude, longitude, (float)searchDistance.Value * 0.001 , string.Join(", ", categories));
+                var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+                Object unit = localSettings.Values["unit"];
+                if (!(bool)unit)
+                    distance_from = distance_from / 1000;
+
+                if (distance_from == 0)
+                    addressForSearch = string.Format("https://www.goyav.com/api/v2/search.json?latitude={0}&longitude={1}&category={2}", latitude, longitude, string.Join(", ", categories));
+                else
+                    addressForSearch = string.Format("https://www.goyav.com/api/v2/search.json?latitude={0}&longitude={1}&distance={2}&category={3}", latitude, longitude, distance_from, string.Join(", ", categories));
 
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                    HttpResponseMessage wcfResponse = await httpClient.GetAsync(resourceAddress);
+                    HttpResponseMessage wcfResponse = await httpClient.GetAsync(addressForSearch);
                     var responseString = await wcfResponse.Content.ReadAsStringAsync();
                     //Replace current URL with your URL
                     ResponseData data = JsonConvert.DeserializeObject<ResponseData>(responseString);

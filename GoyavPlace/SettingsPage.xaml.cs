@@ -27,6 +27,40 @@ namespace GoyavPlace
         public SettingsPage()
         {
             this.InitializeComponent();
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            Object mesure = localSettings.Values["unit"];
+            Object apiKey = localSettings.Values["auth_token"];
+            if (mesure != null && ApiKey != null)
+            {
+                this.ApiKey.Text = "ApiKey : "+ apiKey.ToString();
+                if ((bool)mesure)
+                    this.unit.IsOn = true;
+            }
+
+        }
+
+        private void changeUnit(object sender, RoutedEventArgs e)
+        {
+            //
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            ToggleSwitch toggleSwitch = sender as ToggleSwitch;
+            if (toggleSwitch != null)
+            {
+                if (toggleSwitch.IsOn == true)
+                {
+                    // Meter
+                    localSettings.Values["unit"] = true;
+                }
+                else
+                {
+                    // Kilometer
+                    localSettings.Values["unit"] = false;
+                }
+            }
+#if DEBUG
+            System.Diagnostics.Debug.WriteLine("Unit :" + unit);
+#endif
+
         }
     }
 }

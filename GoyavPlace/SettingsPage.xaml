@@ -8,7 +8,20 @@
     mc:Ignorable="d">
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-        <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Margin="10,0,0,0" TextWrapping="Wrap" Text="Settings " VerticalAlignment="Top" Height="30" Width="340" FontSize="24" FontWeight="Bold"/>
-
+        <StackPanel Orientation="Vertical">
+        <StackPanel Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,5,0,0">
+            <Border Background="#FF2DBF8A" Margin="0,0,0,0">
+                <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Margin="20,0" Text="Settings " VerticalAlignment="Top" FontSize="24" FontWeight="Bold" Width="284" TextWrapping="Wrap" Padding="100,0,0,0" />
+            </Border>
+        </StackPanel>
+        <StackPanel Orientation="Vertical" Margin="0,50,0,0">
+            <ScrollViewer>
+                <StackPanel Orientation="Vertical">
+                    <ToggleSwitch x:Name="unit" OnContent="Kilometer" OffContent="Meter" Width="293" Margin="20,0,0,0" Header="Unit" Toggled="changeUnit" />
+                    <TextBlock x:Name="ApiKey" Text="ApiKey" Margin="20,10,0,0" />
+                </StackPanel>
+            </ScrollViewer>
+        </StackPanel>
+        </StackPanel>
     </Grid>
 </Page>
