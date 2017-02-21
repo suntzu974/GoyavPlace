@@ -35,39 +35,13 @@ using Windows.UI.Xaml.Media;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.UI.Xaml.Navigation;
 using static GoyavPlace.MainPage;
+using GoyavPlace.ViewModels;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 
 namespace GoyavPlace
 {
-    [DataContract]
-    public class Evaluation : EvaluationData
-    {
-        [DataMember(Name = "place_id")]
-        public int place_id { get; set; }
-        [DataMember(Name = "api_key_id")]
-        public int api_key_id { get; set; }
-
-    }
-
-    [DataContract]
-    public class NewPlaceData: PlaceData
-    {
-        [DataMember(Name = "location_attributes")]
-        public new LocationData Location { get; set; }
-        [DataMember(Name = "picture_attributes")]
-        public new PictureData Picture { get; set; }
-        [DataMember(Name = "category_attributes")]
-        public new CategoryData Category { get; set; }
-        [DataMember(Name = "evaluation_attributes")]
-        public new Evaluation Evaluation { get; set; }
-    }
-    [DataContract]
-    public class AddResponse: ResponseData
-    {
-        [DataMember(Name = "place")]
-        public NewPlaceData Place { get; set; }
-    }
+   
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
@@ -261,8 +235,9 @@ namespace GoyavPlace
                     string postBody = JsonConvert.SerializeObject(PLACE, Formatting.Indented);
                     try
                     {
+                        this.progress.IsActive = true;
                         //overwrite the value if you need to
-                        resourceAddress = string.Format("https://www.goyav.com/api/v2/places.json?auth_token={0}", api_token.ToString());
+                        resourceAddress = string.Format("{0}/v2/places.json?auth_token={1}", App.IP_ADDRESS,api_token.ToString());
                         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                         HttpResponseMessage wcfResponse = await httpClient.PostAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
                         var responseString = await wcfResponse.Content.ReadAsStringAsync();
@@ -281,6 +256,7 @@ namespace GoyavPlace
                             this.country.Text = String.Empty;
                             this.phone.Text = String.Empty;
                             this.geolocation.Text = String.Empty;
+                            this.progress.IsActive = false;
                             //this.Frame.Navigate(typeof(MainPage), string.Empty);
                         }
                     }

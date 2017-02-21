@@ -9,7 +9,9 @@
     <Page.BottomAppBar>
         <CommandBar>
             <CommandBar.Content>
-                <Grid/>
+                <Grid>
+                    <ProgressRing Name="progress" Width="35" Height="35"  Margin="20,0,0,0" IsActive="False"/>
+                </Grid>
             </CommandBar.Content>
             <AppBarButton Icon="Camera" Label="Camera">
                 <AppBarButton.Flyout>

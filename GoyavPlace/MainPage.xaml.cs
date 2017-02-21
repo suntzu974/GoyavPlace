@@ -13,7 +13,9 @@ using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Input;
 using Windows.UI.Xaml.Media;
+using Windows.UI.Xaml.Media.Animation;
 using Windows.UI.Xaml.Media.Imaging;
+using GoyavPlace.ViewModels;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=402352&clcid=0x409
 // Facebook ID : 1562501297351445
@@ -23,98 +25,7 @@ using Windows.UI.Xaml.Media.Imaging;
 //                    item.file = base64Content;
 namespace GoyavPlace
 {
-    [DataContract]
-    public class PictureData
-    {
-        [DataMember(Name = "picture")]
-        public string picture { get; set; }
-        [DataMember(Name = "filename")]
-        public string filename { get; set; }
-        [DataMember(Name = "file")]
-        public string file { get; set; }
-    }
-    [DataContract]
-    public class Picture : PictureData
-    {
-        [DataMember(Name = "id")]
-        public string id { get; set; }
-        [DataMember(Name = "encoded")]
-        public string encoded { get; set; }
-        public BitmapImage base64Decoded { get; set; }
-    }
-    [DataContract]
-    public class LocationData
-    {
-        [DataMember(Name = "latitude")]
-        public double latitude { get; set; }
-        [DataMember(Name = "longitude")]
-        public double longitude { get; set; }
-        [DataMember(Name = "country")]
-        public string country { get; set; }
-        [DataMember(Name = "town")]
-        public string town { get; set; }
-        [DataMember(Name = "address")]
-        public string address { get; set; }
-    }
-    [DataContract]
-    public class EvaluationData
-    {
-        [DataMember(Name = "id")]
-        public int id { get; set; }
-        [DataMember(Name = "price")]
-        public int price { get; set; }
-        [DataMember(Name = "service")]
-        public int service { get; set; }
-        [DataMember(Name = "quality")]
-        public int quality { get; set; }
-        [DataMember(Name = "like")]
-        public int like { get; set; }
-    }
-    [DataContract]
-    public class CategoryData
-    {
-        [DataMember(Name = "id")]
-        public int id { get; set; }
-        [DataMember(Name = "category")]
-        public int category { get; set; }
-    }
-
-    [DataContract]
-    public class PlaceData
-    {
-        [DataMember(Name = "id")]
-        public int id { get; set; }
-        [DataMember(Name = "name")]
-        public string name { get; set; }
-        [DataMember(Name = "phone")]
-        public string phone { get; set; }
-        [DataMember(Name = "api_key_id")]
-        public int api_key_id { get; set; }
-        [DataMember(Name = "pictures")]
-        public PictureData[] Pictures { get; set; }
-        [DataMember(Name = "location")]
-        public LocationData Location { get; set; }
-        [DataMember(Name = "picture")]
-        public Picture Picture { get; set; }
-        [DataMember(Name = "evaluation")]
-        public EvaluationData Evaluation { get; set; }
-        [DataMember(Name = "category")]
-        public CategoryData Category { get; set; }
-        [DataMember(Name = "distance")]
-        public double distance { get; set; }
-
-    }
-
-    [DataContract]
-    public class ResponseData
-    {
-        [DataMember(Name = "success")]
-        public string success { get; set; }
-        [DataMember(Name = "status")]
-        public string status { get; set; }
-        [DataMember(Name = "places")]
-        public PlaceData[] Places { get; set; }
-    }
+    
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
@@ -135,56 +46,10 @@ namespace GoyavPlace
         {
             this.InitializeComponent();
             Current = this;
+            DateTime thisDay = DateTime.Today;
+            this.begindate.Date = thisDay;
         }
 
-        private async void searchPlace(object sender, KeyRoutedEventArgs e)
-        {
-            // Search place
-            if (e.Key == Windows.System.VirtualKey.Enter)
-            {
-                progress.IsActive = true;
-                try
-                {
-                    //Create HttpClient
-                    HttpClient httpClient = new HttpClient();
-                    //Define Http Headers
-                    httpClient.DefaultRequestHeaders.Accept.TryParseAdd("application/json");
-                    //Call
-                    string resourceAddress = string.Format("https://www.goyav.com/api/v2/search_by_name.json?search_by_name={0}", this.PlaceForSearch.Text.ToUpper());
-                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                    HttpResponseMessage wcfResponse = await httpClient.GetAsync(resourceAddress);
-                    var responseString = await wcfResponse.Content.ReadAsStringAsync();
-                    //Replace current URL with your URL
-                    ResponseData data = JsonConvert.DeserializeObject<ResponseData>(responseString);
-                    if (data.Places.Count() > 0)
-                    {
-                        placeList.Visibility = Visibility.Visible;
-                        foreach (var place in data.Places)
-                        {
-                            // item.distance = distance(latitude, longitude, item.latitude, item.longitude, 'K');
-                            place.Picture.base64Decoded = getImage(place.Picture.encoded);
-                            placeList.Items.Add(place);
-                        }
-                    }
-                    else
-                    {
-                        // 
-                    }
-                    if (wcfResponse.IsSuccessStatusCode)
-                    { progress.IsActive = false; }
-                    #if DEBUG
-                        System.Diagnostics.Debug.WriteLine("GET Response !!" + responseString.ToString());
-                        System.Diagnostics.Debug.WriteLine("GET Response status code " + wcfResponse.StatusCode);
-                    #endif
-                }
-
-                catch (Exception ex)
-                {
-                    //....
-                }
-
-            }
-        }
         // Distance
         private double distance(double lat1, double lon1, double lat2, double lon2, char unit)
         {
@@ -204,31 +69,15 @@ namespace GoyavPlace
             return (dist);
         }
 
-        //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-        //::  This function converts decimal degrees to radians             :::
-        //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
         private double deg2rad(double deg)
         {
             return (deg * Math.PI / 180.0);
         }
 
-        //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
-        //::  This function converts radians to decimal degrees             :::
-        //:::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::::
         private double rad2deg(double rad)
         {
             return (rad / Math.PI * 180.0);
         }
-        private void getPlace(object sender, ItemClickEventArgs e)
-        {
-            progress.IsActive = true;
-            clicked_place = e.ClickedItem as PlaceData;
-            System.Diagnostics.Debug.WriteLine("GET Place " + clicked_place.name.ToString() + " and Location" + clicked_place.Location.address.ToString());
-            // Navigate to cocktail page with item you click/tap on
-            Frame.Navigate(typeof(DetailPage), e.ClickedItem);
-            progress.IsActive = false;
-        }
-
         private void addPlace(object sender, RoutedEventArgs e)
         {
             //
@@ -256,12 +105,6 @@ namespace GoyavPlace
                 return image;
             }
         }
-
-        private void showCriteria(object sender, RoutedEventArgs e)
-        {
-            searchPanel.Visibility = Visibility.Visible;
-        }
-
 
         private void searchForDistance(object sender, Windows.UI.Xaml.Controls.Primitives.RangeBaseValueChangedEventArgs e)
         {
@@ -296,12 +139,12 @@ namespace GoyavPlace
             if (StatusBlock.Text != String.Empty)
             {
                 StatusBorder.Visibility = Visibility.Visible;
-                StatusPanel.Visibility = Visibility.Visible;
+                //StatusPanel.Visibility = Visibility.Visible;
             }
             else
             {
                 StatusBorder.Visibility = Visibility.Collapsed;
-                StatusPanel.Visibility = Visibility.Collapsed;
+                //StatusPanel.Visibility = Visibility.Collapsed;
             }
         }
 
@@ -311,9 +154,8 @@ namespace GoyavPlace
             double latitude = 0;
             double longitude = 0;
             String addressForSearch = String.Empty;
-            searchPanel.Visibility = Visibility.Collapsed;
-            placeList.Visibility = Visibility.Collapsed;
-            placeList.Items.Clear();
+            DateTime searchDate = this.begindate.Date.Value.DateTime;
+
             // Get location
             try
             {
@@ -372,45 +214,38 @@ namespace GoyavPlace
             if (searchRestaurant.IsChecked == true)
                 categories.Add(4);
 
-            System.Diagnostics.Debug.WriteLine("distance !!" + searchDistance.Value.ToString());
-
-            searchPanel.Visibility = Visibility.Collapsed;
-            placeList.Visibility = Visibility.Visible;
-            placeList.Items.Clear();
             // Search place
                 try
                 {
-                progress.IsActive = true;
-                //Create HttpClient
-                HttpClient httpClient = new HttpClient();
+                    progress.IsActive = true;
+                    List<PlaceData> ListOfPlaces = new List<PlaceData>();
+                    //Create HttpClient
+                    HttpClient httpClient = new HttpClient();
                     //Define Http Headers
                     httpClient.DefaultRequestHeaders.Accept.TryParseAdd("application/json");
-                //Call
-                //string resourceAddress = string.Format("https://www.goyav.com/api/v2/search_by_name.json?search_by_name={0}", this.PlaceForSearch.Text.ToUpper());
-                var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-                Object unit = localSettings.Values["unit"];
-                if (!(bool)unit)
-                    distance_from = distance_from / 1000;
+                    var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+                    Object unit = localSettings.Values["unit"];
+                    if (!(bool)unit)
+                        distance_from = distance_from / 1000;
 
-                if (distance_from == 0)
-                    addressForSearch = string.Format("https://www.goyav.com/api/v2/search.json?latitude={0}&longitude={1}&category={2}", latitude, longitude, string.Join(", ", categories));
-                else
-                    addressForSearch = string.Format("https://www.goyav.com/api/v2/search.json?latitude={0}&longitude={1}&distance={2}&category={3}", latitude, longitude, distance_from, string.Join(", ", categories));
+                    if (distance_from == 0)
+                        addressForSearch = string.Format("{0}/v2/search.json?latitude={1}&longitude={2}&category={3}&start_date={4}", App.IP_ADDRESS,latitude, longitude, string.Join(", ", categories), searchDate.ToString("yyyy-MM-dd"));
+                    else
+                        addressForSearch = string.Format("{0}/v2/search.json?latitude={1}&longitude={2}&distance={3}&category={4}&start_date={5}", App.IP_ADDRESS,latitude, longitude, distance_from, string.Join(", ", categories), searchDate.ToString("yyyy-MM-dd"));
 
-                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                     HttpResponseMessage wcfResponse = await httpClient.GetAsync(addressForSearch);
                     var responseString = await wcfResponse.Content.ReadAsStringAsync();
                     //Replace current URL with your URL
                     ResponseData data = JsonConvert.DeserializeObject<ResponseData>(responseString);
                     if (data.Places.Count() > 0)
                     {
-                    placeList.Visibility = Visibility.Visible;
                         foreach (var place in data.Places)
                         {
                             // item.distance = distance(latitude, longitude, item.latitude, item.longitude, 'K');
                             place.Picture.base64Decoded = getImage(place.Picture.encoded);
                             place.distance = distance(latitude, longitude, place.Location.latitude, place.Location.longitude, 'K')*1000.00;
-                            placeList.Items.Add(place);
+                            ListOfPlaces.Add(place);
                         }
                     }
                     else
@@ -419,17 +254,24 @@ namespace GoyavPlace
                     }
                     if (wcfResponse.IsSuccessStatusCode)
                     {
-                    progress.IsActive = false; }
-                    #if DEBUG
-                    System.Diagnostics.Debug.WriteLine("GET Response !!" + responseString.ToString());
-                    System.Diagnostics.Debug.WriteLine("GET Response status code " + wcfResponse.StatusCode);
-                    #endif
+                        progress.IsActive = false;
+#if DEBUG
+                        System.Diagnostics.Debug.WriteLine("GET Response !!" + responseString.ToString());
+                        System.Diagnostics.Debug.WriteLine("GET Response status code " + wcfResponse.StatusCode);
+#endif
+                        Frame.Navigate(typeof(MasterDetailPage), ListOfPlaces);
+                    }
                 }
 
                 catch (Exception ex)
                 {
                     //....
                 }
+        }
+
+        private void manageRates(object sender, RoutedEventArgs e)
+        {
+            this.Frame.Navigate(typeof(RatePage));
         }
     }
 }

@@ -1,0 +1,53 @@
+﻿<Page
+    x:Class="GoyavPlace.RatePage"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:local="using:GoyavPlace"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    mc:Ignorable="d">
+
+    <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
+        <RelativePanel>
+                <TextBlock x:Name="title"  Margin="5,5,0,5" TextWrapping="Wrap" Text="Search for GoyavPlace" FontSize="24" />
+                <ProgressRing x:Name="progress" RelativePanel.RightOf="title" IsActive="False" Margin="10,5,0,10" VerticalAlignment="Top" Padding="20,0,0,0" />
+                <TextBlock x:Name="displayDistance" RelativePanel.Below="progress" Margin="10,20,10,0" Text="Distance"  />
+                <Slider x:Name="searchDistance" 
+                        RelativePanel.RightOf="displayDistance" 
+                        RelativePanel.AlignRightWithPanel="True" Minimum="0" 
+                        LargeChange="50" Maximum="1000" 
+                        StepFrequency="1" Value="0" 
+                        Margin="5,40,5,5" 
+                        AutomationProperties.Name="Distance" 
+                        AutomationProperties.HelpText="Distance" 
+                         />
+
+            <StackPanel Name="check" RelativePanel.Below="searchDistance" Orientation="Horizontal" Margin="20">
+                <StackPanel Orientation="Vertical">
+                    <CheckBox x:Name="searchStation" RelativePanel.Below="searchDistance"  Content="Place" MinWidth="60" IsChecked="True" Margin="20,10,0,0"  />
+                    <CheckBox x:Name="searchLeisure" RelativePanel.Below="searchStation" Content="Leisure" MinWidth="60" IsChecked="True" Margin="20,10,0,0" />
+                    <CheckBox x:Name="searchRestaurant" RelativePanel.Below="searchLeisure" Content="Restaurant" MinWidth="60" IsChecked="True"  Margin="20,10,0,0"/>
+                    <CheckBox x:Name="searchHotel" RelativePanel.Below="searchRestaurant" Content="Hotel" MinWidth="60" IsChecked="True"  Margin="20,10,0,0" />
+                </StackPanel>
+                <StackPanel  Orientation="Horizontal" Margin="20">
+                    <TextBlock Text="Je suis" Width="100"/>
+                    <Button Content="Go"/>
+                </StackPanel>
+            </StackPanel>
+            <StackPanel RelativePanel.Below="check" Orientation="Vertical">
+                <StackPanel Orientation="Horizontal" Margin="20,0,0,25">
+                    <TextBlock Text="Début" Width="60"/>
+                    <DatePicker x:Name="beginDate" />
+                </StackPanel>
+                <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+                    <TextBlock Text="Fin" Width="60"/>
+                    <DatePicker x:Name="endDate" />
+                </StackPanel>
+            </StackPanel>
+            <Border Name="StatusBorder" RelativePanel.AlignBottomWithPanel="True" RelativePanel.AlignLeftWithPanel="True" RelativePanel.AlignRightWithPanel="True">
+                    <TextBlock x:Name="StatusBlock"  FontWeight="Bold" 
+                                MaxWidth="{Binding ElementName=Splitter, Path=ActualWidth}" Margin="10,10,10,20" TextWrapping="Wrap"  />
+                </Border>
+        </RelativePanel>
+    </Grid>
+</Page>

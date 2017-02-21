@@ -5,9 +5,16 @@
     xmlns:local="using:GoyavPlace"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:conversion="using:GoyavPlace.Converters"
     mc:Ignorable="d">
     <Page.BottomAppBar>
         <CommandBar VerticalContentAlignment="Top" VerticalAlignment="Top">
+            <CommandBar.Content>
+                <Grid>
+                    <ProgressRing Name="progress" Width="35" Height="35"  Margin="20,0,0,0" IsActive="False"/>
+                </Grid>
+            </CommandBar.Content>
+
             <AppBarButton Icon="CellPhone" Label="Call Phone" Click="getCall"/>
             <AppBarButton Icon="Directions" Label="Drive to" Click="getDrive"/>
             <AppBarButton x:Name="appBarButton3" Icon="ReShare" Label="Share" Click="getShare" Visibility="Collapsed"/>
@@ -15,11 +22,17 @@
             <AppBarButton x:Name="refreshButton" Icon="Refresh" Label="Refresh notes" Click="refreshNotes" />
         </CommandBar>
     </Page.BottomAppBar>
+    <Page.Resources>
+        <conversion:ConvertDate x:Key="ConvertDate"/>
+    </Page.Resources>
 
     <Grid Background="{ThemeResource ApplicationPageBackgroundThemeBrush}">
-            <Pivot x:Name="goyavPivot" Title="Detail place" Margin="0,0,0,0" SelectionChanged="getIndexFromPivot" >
-                <PivotItem x:Name="home" TabIndex="0" Header="Home" Margin="0,0,0,0">
-                    <ScrollViewer VerticalScrollMode="Auto">
+        <Pivot x:Name="goyavPivot" Title="Detail place" Margin="0" SelectionChanged="getIndexFromPivot" >
+                <PivotItem x:Name="home" TabIndex="0" Margin="0,0,0,0">
+                <PivotItem.Header>
+                    <SymbolIcon Symbol="Home" Foreground="Blue"></SymbolIcon>
+                </PivotItem.Header>
+                <ScrollViewer VerticalScrollMode="Auto">
                         <StackPanel  HorizontalAlignment="Left" >
                             <StackPanel Orientation ="Vertical" Margin="5,5,5,0">
                                 <StackPanel Orientation="Horizontal">
@@ -66,9 +79,9 @@
                             </StackPanel>
                             <StackPanel Orientation="Horizontal" Margin="5,0" Height="84">
                                 <StackPanel Orientation="Horizontal">
-                                    <Slider x:Name="slPrice" Margin="10,0,10,0" Maximum="3" LargeChange="1" Orientation="Vertical"  ValueChanged="slPriceChanged" Header="Price" MinWidth="80" GotFocus="doSave"  />
-                                    <Slider x:Name="slQuality" Margin="10,0,10,0" Orientation="Vertical" Maximum="3" LargeChange="1"  ValueChanged="slQualityChanged" Header="Quality" MinWidth="80" GotFocus="doSave"  />
-                                    <Slider x:Name="slService" Margin="10,0,10,0" Maximum="3" LargeChange="1" Orientation="Vertical" Height="84" ValueChanged="slServiceChanged" Header="Service" MinWidth="80" GotFocus="doSave" />
+                                    <Slider x:Uid="SLPrice" x:Name="slPrice" Margin="10,0,10,0" Maximum="3" LargeChange="1" Orientation="Vertical"  ValueChanged="slPriceChanged" Header="Price" MinWidth="80" GotFocus="doSave"  />
+                                    <Slider x:Uid="SLQuality" x:Name="slQuality" Margin="10,0,10,0" Orientation="Vertical" Maximum="3" LargeChange="1"  ValueChanged="slQualityChanged" Header="Quality" MinWidth="80" GotFocus="doSave"  />
+                                    <Slider x:Uid="SLService" x:Name="slService" Margin="10,0,10,0" Maximum="3" LargeChange="1" Orientation="Vertical" Height="84" ValueChanged="slServiceChanged" Header="Service" MinWidth="80" GotFocus="doSave" />
                                 </StackPanel>
                             </StackPanel>
                             <StackPanel x:Name="StatusPanel" Orientation="Vertical" Margin="0,0,0,0" >
@@ -84,7 +97,7 @@
                 </PivotItem>
                 <PivotItem x:Name="notes" TabIndex="1" Margin="0,0,0,0">
                     <PivotItem.Header>
-                        <SymbolIcon Symbol="AllApps"></SymbolIcon>
+                        <SymbolIcon Symbol="AllApps" Foreground="DarkBlue"></SymbolIcon>
                     </PivotItem.Header>
                 <StackPanel Orientation="Vertical">
                         <StackPanel Orientation="Vertical" >
@@ -103,11 +116,11 @@
                                                         <TextBlock Name="tweetBlock" Margin="5,0,0,0" Text="{Binding Path=tweet}" TextWrapping="Wrap" Width="230" />
                                                     </StackPanel>
                                                     <StackPanel Orientation="Horizontal" >
-                                                        <TextBlock Text="updated_at:" FontWeight="Bold" />
-                                                        <TextBlock Name="updatedBlock" Margin="5,0,0,0"  Text="{Binding Path=updated_at}" />
+                                                        <TextBlock x:Uid="updated_at" Text="updated_at:" FontWeight="Bold" />
+                                                    <TextBlock Name="updatedBlock" Margin="5,0,0,0"  Text="{Binding Path=updated_at, Converter={StaticResource ConvertDate}}" />
                                                     </StackPanel>
                                                     <StackPanel Orientation="Horizontal" >
-                                                        <TextBlock Text="author:" FontWeight="Bold" />
+                                                        <TextBlock x:Uid="author" Text="author:" FontWeight="Bold" />
                                                         <TextBlock Name="authorBlock" Margin="5,0,0,0"  Text="{Binding Path=author.api_token}" />
                                                     </StackPanel>
                                                 </StackPanel>
@@ -127,8 +140,64 @@
                 <PivotItem.Header>
                     <SymbolIcon Symbol="BrowsePhotos"></SymbolIcon>
                 </PivotItem.Header>
-                <TextBlock Text="Mes photos" FontSize="48" />
-                </PivotItem>
+                <StackPanel Orientation="Vertical">
+                    <StackPanel Orientation="Vertical" >
+                        <StackPanel Orientation="Vertical" Height="282" Margin="0,0,0,5">
+                            <GridView x:Name="photoGrid"  
+                                        HorizontalAlignment="Left" 
+                                        Height="260" Margin="10,10,0,5"   
+                                        VerticalAlignment="Top" 
+                                        Width="300"  
+                                        IsItemClickEnabled="True"  
+                                        Padding="0,5" ScrollViewer.VerticalScrollBarVisibility="Visible">
+                                <GridView.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal"  HorizontalAlignment="Center"  
+                                                    Height="120" Width="300"
+                                                    BorderThickness="1" BorderBrush="DarkBlue"  Background="AliceBlue">
+                                            <StackPanel HorizontalAlignment="Center" Margin="2" Padding="5" >
+                                                <StackPanel Orientation="Horizontal">
+                                                    <StackPanel Orientation="Horizontal" >
+                                                        <Image x:Name="picture" 
+                                                            Source="{Binding Path=base64Decoded}"
+                                                            Width="100" Height="100" 
+                                                            Margin="6"
+                                                            VerticalAlignment="Center"
+                                                            HorizontalAlignment="Center"
+                                                            Grid.Column="0"></Image>
+                                                    </StackPanel>
+                                                    <StackPanel Orientation="Vertical">
+                                                        <StackPanel Orientation="Horizontal" >
+                                                            <TextBlock x:Uid="updated_at" Margin="6,0,0,0" Text="updated_at:" FontWeight="Bold" />
+                                                            <TextBlock Name="updatedBlock" Margin="5,0,0,0"  Text="{Binding Path=updated_at, Converter={StaticResource ConvertDate}}" />
+                                                        </StackPanel>
+                                                        <StackPanel Orientation="Horizontal" >
+                                                            <TextBlock x:Uid="author" Margin="6,0,0,0" Text="author:" FontWeight="Bold" />
+                                                            <TextBlock Name="authorBlock" Margin="5,0,0,0"  Text="{Binding Path=author.api_token}" />
+                                                        </StackPanel>
+                                                    </StackPanel>
+                                                </StackPanel>
+                                            </StackPanel>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </GridView.ItemTemplate>
+                            </GridView>
+                        </StackPanel>
+                        <StackPanel Orientation="Horizontal" BorderThickness="1" CornerRadius="5">
+                            <Button Content="Photo">
+                                <Button.Flyout>
+                                    <Flyout Placement="Bottom">
+                                        <StackPanel>
+                                            <Button Content="Library"  Click="getLibrary" />
+                                            <Button Content="Camera"  Click="getCamera"/>
+                                        </StackPanel>
+                                    </Flyout>
+                                </Button.Flyout>
+                            </Button>
+                        </StackPanel>
+                    </StackPanel>
+                </StackPanel>
+            </PivotItem>
                 <PivotItem x:Name="rates" TabIndex="3" Margin="0,0,0,0">
                     <PivotItem.Header>
                         <SymbolIcon Symbol="Calculator"></SymbolIcon>

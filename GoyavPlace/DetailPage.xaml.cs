@@ -1,6 +1,7 @@
 ﻿using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -17,6 +18,16 @@ using Windows.UI.Xaml.Navigation;
 using winsdkfb;
 using winsdkfb.Graph;
 using static GoyavPlace.MainPage;
+using GoyavPlace.ViewModels;
+using Windows.UI.Core;
+using Windows.UI.Xaml.Media.Animation;
+using Windows.UI.Xaml.Data;
+using Windows.Storage.Pickers;
+using Windows.Storage;
+using Windows.Media.Capture;
+using Windows.UI.Xaml.Media.Imaging;
+using Windows.Graphics.Imaging;
+using Windows.Storage.Streams;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 
@@ -28,44 +39,6 @@ namespace GoyavPlace
         public string Post_Id { get; set; }
     }
 
-    [DataContract]
-    public class TweetAuthor
-    {
-        [DataMember(Name = "id")]
-        public int id { get; set; }
-        [DataMember(Name = "api_token")]
-        public string api_token { get; set; }
-    }
-    [DataContract]
-    public class TweetData
-    {
-        [DataMember(Name = "id")]
-        public int id { get; set; }
-        [DataMember(Name = "tweet")]
-        public string tweet { get; set; }
-    }
-    [DataContract]
-    public class Tweet : TweetData
-    {
-        [DataMember(Name = "place_id")]
-        public int place_id { get; set; }
-        [DataMember(Name = "api_key_id")]
-        public int api_key_id { get; set; }
-        [DataMember(Name = "updated_at")]
-        public string updated_at { get; set; }
-        [DataMember(Name ="author")]
-        public TweetAuthor author { get; set; }
-    }
-    [DataContract]
-    public class ResponseTweet
-    {
-        [DataMember(Name = "success")]
-        public string success { get; set; }
-        [DataMember(Name = "status")]
-        public string status { get; set; }
-        [DataMember(Name = "tweets")]
-        public Tweet[] tweets { get; set; }
-    }
 
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
@@ -77,64 +50,19 @@ namespace GoyavPlace
         Evaluation evaluation = new Evaluation();
         CategoryData category = new CategoryData();
         Tweet tweet = new Tweet();
-
+        Photo photo = new Photo();
+        string base64Content = String.Empty;
         public DetailPage()
         {
             this.InitializeComponent();
             this.likeButton.Visibility = Visibility.Collapsed;
             this.refreshButton.Visibility = Visibility.Collapsed;
         }
-
-        private async void getTweets()
+        protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
-            noteGrid.Items.Clear();
-            // Search place
-            try
-            {
-                //progress.IsActive = true;
-                //Create HttpClient
-                HttpClient httpClient = new HttpClient();
-                //Define Http Headers
-                httpClient.DefaultRequestHeaders.Accept.TryParseAdd("application/json");
-                String addressForTweets  = string.Format("https://www.goyav.com/api/v2/search_tweets.json?place_id={0}", place.id);
-
-                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
-                HttpResponseMessage wcfResponse = await httpClient.GetAsync(addressForTweets);
-                var responseString = await wcfResponse.Content.ReadAsStringAsync();
-                //Replace current URL with your URL
-                ResponseTweet data = JsonConvert.DeserializeObject<ResponseTweet>(responseString);
-                if (data.tweets.Count() > 0)
-                {
-                    noteGrid.Visibility = Visibility.Visible;
-                    foreach (var tweet in data.tweets)
-                    {
-#if DEBUG
-                        System.Diagnostics.Debug.WriteLine("Tweets.tweet !!" + tweet.tweet.ToString());
-#endif
-                        // item.distance = distance(latitude, longitude, item.latitude, item.longitude, 'K');
-                        noteGrid.Items.Add(tweet);
-                    }
-                }
-                else
-                {
-                    // 
-                }
-                if (wcfResponse.IsSuccessStatusCode)
-                {
-                    //progress.IsActive = false;
-                }
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine("GET Response from Tweets !!" + responseString.ToString());
-                System.Diagnostics.Debug.WriteLine("GET Response status code " + wcfResponse.StatusCode);
-#endif
-            }
-
-            catch (Exception ex)
-            {
-                //....
-            }
-
+            base.OnNavigatedFrom(e);
         }
+
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -183,6 +111,155 @@ namespace GoyavPlace
                 System.Diagnostics.Debug.WriteLine("Failled to associate object");
             }
             getTweets();
+            getPhotos();
+        }
+
+
+        void NavigateBackForWideState(bool useTransition)
+        {
+            // Evict this page from the cache as we may not need it again.
+            NavigationCacheMode = NavigationCacheMode.Disabled;
+
+            if (useTransition)
+            {
+                Frame.GoBack(new EntranceNavigationTransitionInfo());
+            }
+            else
+            {
+                Frame.GoBack(new SuppressNavigationTransitionInfo());
+            }
+        }
+
+        private bool ShouldGoToWideState()
+        {
+            return Window.Current.Bounds.Width >= 720;
+        }
+
+        private void PageRoot_Loaded(object sender, RoutedEventArgs e)
+        {
+            if (ShouldGoToWideState())
+            {
+                // We shouldn't see this page since we are in "wide master-detail" mode.
+                // Play a transition as we are navigating from a separate page.
+                NavigateBackForWideState(useTransition: true);
+            }
+            else
+            {
+                // Realize the main page content.
+                FindName("RootPanel");
+            }
+
+            Window.Current.SizeChanged += Window_SizeChanged;
+        }
+
+        private void PageRoot_Unloaded(object sender, RoutedEventArgs e)
+        {
+            Window.Current.SizeChanged -= Window_SizeChanged;
+        }
+
+        private void Window_SizeChanged(object sender, Windows.UI.Core.WindowSizeChangedEventArgs e)
+        {
+            if (ShouldGoToWideState())
+            {
+                // Make sure we are no longer listening to window change events.
+                Window.Current.SizeChanged -= Window_SizeChanged;
+
+                // We shouldn't see this page since we are in "wide master-detail" mode.
+                NavigateBackForWideState(useTransition: false);
+            }
+        }
+        private async void getPhotos()
+        {
+            photoGrid.Items.Clear();
+            try
+            {
+                progress.IsActive = true;
+                //Create HttpClient
+                HttpClient httpClient = new HttpClient();
+                //Define Http Headers
+                httpClient.DefaultRequestHeaders.Accept.TryParseAdd("application/json");
+                String addressForPhotos = string.Format("{0}/v2/search_photos.json?place_id={1}", App.IP_ADDRESS, place.id);
+
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                HttpResponseMessage wcfResponse = await httpClient.GetAsync(addressForPhotos);
+                var responseString = await wcfResponse.Content.ReadAsStringAsync();
+                //Replace current URL with your URL
+                ResponsePhoto data = JsonConvert.DeserializeObject<ResponsePhoto>(responseString);
+                if (data.photos.Count() > 0)
+                {
+                    noteGrid.Visibility = Visibility.Visible;
+                    foreach (var photo in data.photos)
+                    {
+                        photo.base64Decoded = getImage(photo.encoded);
+                        photoGrid.Items.Add(photo);
+                    }
+                }
+                else
+                {
+                    // 
+                }
+                if (wcfResponse.IsSuccessStatusCode)
+                {
+                    progress.IsActive = false;
+                }
+            }
+
+            catch (Exception ex)
+            {
+                //....
+            }
+
+        }
+        private async void getTweets()
+        {
+            noteGrid.Items.Clear();
+            // Search place
+            try
+            {
+                progress.IsActive = true;
+                //Create HttpClient
+                HttpClient httpClient = new HttpClient();
+                //Define Http Headers
+                httpClient.DefaultRequestHeaders.Accept.TryParseAdd("application/json");
+                String addressForTweets = string.Format("{0}/v2/search_tweets.json?place_id={1}", App.IP_ADDRESS, place.id);
+
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                HttpResponseMessage wcfResponse = await httpClient.GetAsync(addressForTweets);
+                var responseString = await wcfResponse.Content.ReadAsStringAsync();
+                //Replace current URL with your URL
+                ResponseTweet data = JsonConvert.DeserializeObject<ResponseTweet>(responseString);
+                if (data.tweets.Count() > 0)
+                {
+                    noteGrid.Visibility = Visibility.Visible;
+                    foreach (var tweet in data.tweets)
+                    {
+#if DEBUG
+                        System.Diagnostics.Debug.WriteLine("Tweets.tweet !!" + tweet.tweet.ToString());
+#endif
+//                        TimeZoneInfo tzi = TimeZoneInfo.FindSystemTimeZoneById("Central European Standard Time");
+//                        tweet.updated_at = TimeZoneInfo.ConvertTime(tweet.updated_at, tzi);
+                        noteGrid.Items.Add(tweet);
+                    }
+                }
+                else
+                {
+                    // 
+                }
+                if (wcfResponse.IsSuccessStatusCode)
+                {
+                    progress.IsActive = false;
+                }
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine("GET Response from Tweets !!" + responseString.ToString());
+                System.Diagnostics.Debug.WriteLine("GET Response status code " + wcfResponse.StatusCode);
+#endif
+            }
+
+            catch (Exception ex)
+            {
+                //....
+            }
+
         }
 
         private async void getDrive(object sender, RoutedEventArgs e)
@@ -251,15 +328,15 @@ namespace GoyavPlace
                         if (Convert.ToInt16(api_token_id) == place.api_key_id)
                         {
                             // Update 
-                            resourceAddress = string.Format("https://www.goyav.com/api/v2/evaluations/{0}.{1}", place.Evaluation.id, "json");
+                            resourceAddress = string.Format("{0}/v2/evaluations/{1}.{2}", App.IP_ADDRESS,place.Evaluation.id, "json");
                             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                             HttpResponseMessage wcfResponse = await httpClient.PutAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
                             var responseString = await wcfResponse.Content.ReadAsStringAsync();
                             AddResponse RetResponse = JsonConvert.DeserializeObject<AddResponse>(responseString);
                             // Navigate to cocktail page with item you click/tap on
-                            #if DEBUG
-                                System.Diagnostics.Debug.WriteLine("Response String for updating evaluation  " + responseString.ToString() + "Evaluation :" + postBody);
-                            #endif
+#if DEBUG
+                            System.Diagnostics.Debug.WriteLine("Response String for updating evaluation  " + responseString.ToString() + "Evaluation :" + postBody);
+#endif
                             NotifyUser("Status code for like ." + wcfResponse.StatusCode, NotifyType.StatusMessage);
                         }
                         // Update values
@@ -337,17 +414,17 @@ namespace GoyavPlace
                 else
                 {
                     // Posting failed
-                #if DEBUG
+#if DEBUG
                     System.Diagnostics.Debug.WriteLine("Post to facebook failed");
-                #endif
+#endif
                 }
             }
             else
             {
                 //Login failed
-                #if DEBUG
-                    System.Diagnostics.Debug.WriteLine("Login to facebook failed");
-                #endif
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine("Login to facebook failed");
+#endif
             }
 
         }
@@ -359,7 +436,7 @@ namespace GoyavPlace
             {
                 slider.Header = "Low price";
             }
-            if (slider.Value == 2) 
+            if (slider.Value == 2)
             {
                 slider.Header = "Middle price";
             }
@@ -437,30 +514,30 @@ namespace GoyavPlace
                         if (Convert.ToInt16(api_token_id) == place.api_key_id)
                         {
                             // Update 
-                            resourceAddress = string.Format("https://www.goyav.com/api/v2/evaluations/{0}.{1}", place.Evaluation.id, "json");
+                            resourceAddress = string.Format("{0}/v2/evaluations/{1}.{2}", App.IP_ADDRESS,place.Evaluation.id, "json");
                             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                             HttpResponseMessage wcfResponse = await httpClient.PutAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
                             var responseString = await wcfResponse.Content.ReadAsStringAsync();
                             AddResponse RetResponse = JsonConvert.DeserializeObject<AddResponse>(responseString);
                             // Navigate to cocktail page with item you click/tap on
-                            #if DEBUG
-                                System.Diagnostics.Debug.WriteLine("Response String for updating evaluation  " + responseString.ToString() + "Evaluation :" + postBody);
-                            #endif
+#if DEBUG
+                            System.Diagnostics.Debug.WriteLine("Response String for updating evaluation  " + responseString.ToString() + "Evaluation :" + postBody);
+#endif
                             NotifyUser("Status code for evaluation." + wcfResponse.StatusCode, NotifyType.StatusMessage);
                         }
                         else
                         {
                             // Create
-                            resourceAddress = string.Format("https://www.goyav.com/api/v2/evaluations.json");
+                            resourceAddress = string.Format("{0}/v2/evaluations.json",App.IP_ADDRESS);
                             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                             HttpResponseMessage wcfResponse = await httpClient.PostAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
                             var responseString = await wcfResponse.Content.ReadAsStringAsync();
                             AddResponse RetResponse = JsonConvert.DeserializeObject<AddResponse>(responseString);
                             NotifyUser("Status code for evaluation ." + wcfResponse.StatusCode, NotifyType.StatusMessage);
                             // Navigate to cocktail page with item you click/tap on
-                            #if DEBUG
-                                System.Diagnostics.Debug.WriteLine("Response String for new evaluation  " + responseString.ToString());
-                            #endif
+#if DEBUG
+                            System.Diagnostics.Debug.WriteLine("Response String for new evaluation  " + responseString.ToString());
+#endif
 
                         }
                         // Update values
@@ -564,15 +641,15 @@ namespace GoyavPlace
             {
                 string postBody = JsonConvert.SerializeObject(CATEGORY, Formatting.Indented);
                 // Update 
-                resourceAddress = string.Format("https://www.goyav.com/api/v2/categories/{0}.{1}", place.Category.id, "json");
+                resourceAddress = string.Format("{0}/v2/categories/{1}.{2}", App.IP_ADDRESS,place.Category.id, "json");
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 HttpResponseMessage wcfResponse = await httpClient.PutAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
                 var responseString = await wcfResponse.Content.ReadAsStringAsync();
                 AddResponse RetResponse = JsonConvert.DeserializeObject<AddResponse>(responseString);
                 // Navigate to cocktail page with item you click/tap on
-                #if DEBUG
-                    System.Diagnostics.Debug.WriteLine("Response String for updating place  " + responseString.ToString() + " Place :" + postBody);
-                #endif
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine("Response String for updating place  " + responseString.ToString() + " Place :" + postBody);
+#endif
                 NotifyUser("Status code for place updated ." + wcfResponse.StatusCode, NotifyType.StatusMessage);
 
             }
@@ -613,7 +690,7 @@ namespace GoyavPlace
             }
             if (pivot == 2)
             {
-                System.Diagnostics.Debug.WriteLine("Index Horaires");
+                System.Diagnostics.Debug.WriteLine("Index Photos");
                 this.likeButton.Visibility = Visibility.Visible;
                 this.refreshButton.Visibility = Visibility.Collapsed;
 
@@ -631,7 +708,193 @@ namespace GoyavPlace
             }
 
         }
+        private async void sendPhoto(object sender, RoutedEventArgs e)
+        {
+            // httpclient
+            // Send Tweet
 
+            string resourceAddress = String.Empty;
+            // Save item
+            HttpClient httpClient = new HttpClient();
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            if (localSettings.Values.ContainsKey("auth_token"))
+            {
+                //overwrite the value if you need to
+                Object api_token = localSettings.Values["auth_token"];
+                Object api_token_id = localSettings.Values["auth_token_id"];
+                Dictionary<String, Object> PHOTO = new Dictionary<String, Object>();
+                photo.api_key_id = Convert.ToInt16(api_token_id);
+                photo.place_id = place.id;
+                PHOTO["photo"] = photo;
+
+                if (photo.filename != String.Empty)
+                {
+
+                    string postBody = JsonConvert.SerializeObject(PHOTO, Formatting.Indented);
+                    try
+                    {
+                        progress.IsActive = true;
+
+                        //overwrite the value if you need to
+                        resourceAddress = string.Format("{0}/v2/photos.json", App.IP_ADDRESS);
+                        httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                        HttpResponseMessage wcfResponse = await httpClient.PostAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
+                        var responseString = await wcfResponse.Content.ReadAsStringAsync();
+                        ResponsePhoto RetResponse = JsonConvert.DeserializeObject<ResponsePhoto>(responseString);
+                        // Navigate to cocktail page with item you click/tap on
+#if DEBUG
+                        System.Diagnostics.Debug.WriteLine("Response String for new tweet " + responseString.ToString());
+#endif
+                        NotifyUser("http response status code ." + wcfResponse.StatusCode, NotifyType.StatusMessage);
+                        if (wcfResponse.IsSuccessStatusCode)
+                        {
+                            progress.IsActive = false;
+                            // Clean Fields
+                            getPhotos();
+                        }
+                    }
+                    catch (HttpRequestException hre)
+                    {
+                    }
+                    catch (TaskCanceledException)
+                    {
+                    }
+                    catch (Exception ex)
+                    {
+                    }
+                    finally
+                    {
+                        if (httpClient != null)
+                        {
+                            httpClient.Dispose();
+                            httpClient = null;
+                        }
+                    }
+                }
+                else
+                {
+                    NotifyUser("all fields must be filled.", NotifyType.ErrorMessage);
+                }
+            }
+
+        }
+        private async void getLibrary(object sender, RoutedEventArgs e)
+        {
+            var picker = new FileOpenPicker();
+            picker.ViewMode = PickerViewMode.Thumbnail;
+            picker.SuggestedStartLocation = PickerLocationId.PicturesLibrary;
+            picker.FileTypeFilter.Add(".jpg");
+            picker.FileTypeFilter.Add(".jpeg");
+            picker.FileTypeFilter.Add(".png");
+
+            StorageFile file = await picker.PickSingleFileAsync();
+            if (file != null)
+            {
+                // Application now has read/write access to the picked file
+                var stream = await file.OpenAsync(FileAccessMode.Read);
+                var bitmapImage = new BitmapImage();
+                await bitmapImage.SetSourceAsync(stream);
+                var decoder = await BitmapDecoder.CreateAsync(stream);
+                base64Content = Convert.ToBase64String(await CreateScaledImage2(decoder, 1024, 760));
+                photo.file = base64Content;
+                photo.filename = "goyav.png";
+                photo.picture = "goyav.png";
+                sendPhoto(sender, e);
+
+            }
+            else
+            {
+                this.geolocation.Text = "Operation cancelled.";
+            }
+
+        }
+        public static BitmapImage getImage(string img)
+        {
+            var imageBytes = Convert.FromBase64String(img);
+            using (InMemoryRandomAccessStream ms = new InMemoryRandomAccessStream())
+            {
+                using (DataWriter writer = new DataWriter(ms.GetOutputStreamAt(0)))
+                {
+                    writer.WriteBytes((byte[])imageBytes);
+                    writer.StoreAsync().GetResults();
+                }
+
+                var image = new BitmapImage();
+                image.SetSource(ms);
+                return image;
+            }
+        }
+        private async void getCamera(object sender, RoutedEventArgs e)
+        {
+            CameraCaptureUI captureUI = new CameraCaptureUI();
+            captureUI.PhotoSettings.Format = CameraCaptureUIPhotoFormat.Jpeg;
+            //captureUI.PhotoSettings.CroppedSizeInPixels = new Size(100, 100);
+            StorageFile photoStore = await captureUI.CaptureFileAsync(CameraCaptureUIMode.Photo);
+            if (photoStore != null)
+            {
+                // Application now has read/write access to the picked file
+                var stream = await photoStore.OpenAsync(FileAccessMode.Read);
+                var bitmapImage = new BitmapImage();
+                await bitmapImage.SetSourceAsync(stream);
+                var decoder = await BitmapDecoder.CreateAsync(stream);
+                base64Content = Convert.ToBase64String(await CreateScaledImage2(decoder, 760, 1024));
+                //ImageList.Add(new ImageItem(bitmapImage, base64Content));
+                photo.file = base64Content;
+                photo.filename = "goyav.png";
+                photo.picture = "goyav.png";
+                sendPhoto(sender, e);
+            }
+            else
+            {
+                this.geolocation.Text = "Operation cancelled.";
+                // User cancelled photo capture
+                return;
+            }
+        }
+        public Task<byte[]> CreateScaledImage2(BitmapDecoder decoder, uint newWidth, uint newHeight)
+        {
+            return Task.Run<byte[]>(async () =>
+            {
+                var originalPixelWidth = decoder.PixelWidth;
+                var originalPixelHeight = decoder.PixelHeight;
+
+                long start = DateTime.Now.Ticks / TimeSpan.TicksPerMillisecond;
+                InMemoryRandomAccessStream ras = null;
+                try
+                {
+
+                    ras = new InMemoryRandomAccessStream();
+                    BitmapEncoder enc = await BitmapEncoder.CreateForTranscodingAsync(ras, decoder);
+
+                    enc.BitmapTransform.ScaledHeight = newHeight;
+                    enc.BitmapTransform.ScaledWidth = newWidth;
+
+                    await enc.FlushAsync();
+
+
+                    byte[] previewByteArray = new byte[ras.Size];
+                    DataReader dataReader = new DataReader(ras.GetInputStreamAt(0));
+                    await dataReader.LoadAsync((uint)ras.Size);
+
+                    dataReader.ReadBytes(previewByteArray);
+                    return previewByteArray;
+                }
+                catch (Exception ex)
+                {
+                    string s = ex.ToString();
+                    throw ex;
+                }
+                finally
+                {
+
+                    if (ras != null)
+                    {
+                        ras.Dispose();
+                    }
+
+                }
+            });
+        }
         private async void sendTweet(object sender, RoutedEventArgs e)
         {
             // Send Tweet
@@ -645,20 +908,20 @@ namespace GoyavPlace
                 //overwrite the value if you need to
                 Object api_token = localSettings.Values["auth_token"];
                 Object api_token_id = localSettings.Values["auth_token_id"];
-                Dictionary<String, Object> TWEET= new Dictionary<String, Object>();
+                Dictionary<String, Object> TWEET = new Dictionary<String, Object>();
                 tweet.tweet = this.noteText.Text.ToString();
                 tweet.api_key_id = Convert.ToInt16(api_token_id);
                 tweet.place_id = place.id;
                 TWEET["tweet"] = tweet;
 
-                if (tweet.tweet != String.Empty )
+                if (tweet.tweet != String.Empty)
                 {
 
                     string postBody = JsonConvert.SerializeObject(TWEET, Formatting.Indented);
                     try
                     {
                         //overwrite the value if you need to
-                        resourceAddress = string.Format("https://www.goyav.com/api/v2/tweets.json?place_id={0}?api_key_id={1}&tweet{2}", tweet.place_id,tweet.api_key_id,tweet.tweet);
+                        resourceAddress = string.Format("{0}/v2/tweets.json?place_id={1}?api_key_id={2}&tweet{3}", App.IP_ADDRESS,tweet.place_id, tweet.api_key_id, tweet.tweet);
                         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                         HttpResponseMessage wcfResponse = await httpClient.PostAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
                         var responseString = await wcfResponse.Content.ReadAsStringAsync();
@@ -705,6 +968,7 @@ namespace GoyavPlace
         {
             getTweets();
         }
+
     }
 
 }
