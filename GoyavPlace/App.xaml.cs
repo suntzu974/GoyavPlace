@@ -16,98 +16,37 @@ using Windows.UI.Popups;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
 using Windows.UI.Xaml.Navigation;
-using GoyavPlace.Data;
 using GoyavPlace.ViewModels;
+using Windows.Devices.Geolocation;
+using System.Threading;
+using Windows.Networking.Sockets;
+using Windows.Storage.Streams;
+using Windows.ApplicationModel.Background;
 
 namespace GoyavPlace
 {
     
     sealed partial class App : Application
     {
+        private uint _desireAccuracyInMetersValue = 0;
+        private CancellationTokenSource _cts = null;
         private AuthToken authentication;
-        public const string IP_ADDRESS = "https://www.goyav.com/api";
+        public const string IP_ADDRESS = "https://www.goyav.com/api/v2";
+//        public const string IP_ADDRESS = "https://www.goyav.re/api/v2";
+        public const string APP_NAME = "GoyavPlace";
+        DispatcherTimer quoteTimer;
         public App()
         {
             this.InitializeComponent();
             this.Suspending += OnSuspending;
         }
-        //
-        // OLD CODE
-        //
-        /*        protected override void OnLaunched(LaunchActivatedEventArgs e)
-                {
-                #if DEBUG
-                    if (System.Diagnostics.Debugger.IsAttached)
-                    {
-                        this.DebugSettings.EnableFrameRateCounter = true;
-                    }
-                #endif
-                    Frame rootFrame = Window.Current.Content as Frame;
-
-                    if (rootFrame == null)
-                    {
-                        rootFrame = new Frame();
-                        rootFrame.NavigationFailed += OnNavigationFailed;
-                        rootFrame.Navigated += OnNavigated;
-                        if (e.PreviousExecutionState == ApplicationExecutionState.Terminated)
-                        {
-                            //TODO: Load state from previously suspended application
-                        }
-
-                        Window.Current.Content = rootFrame;
-                        SystemNavigationManager.GetForCurrentView().BackRequested += OnBackRequested;
-                        SystemNavigationManager.GetForCurrentView().AppViewBackButtonVisibility =
-                            rootFrame.CanGoBack ?
-                            AppViewBackButtonVisibility.Visible :
-                            AppViewBackButtonVisibility.Collapsed;
-                        RegisterUser();
-                    }
-
-                    if (e.PrelaunchActivated == false)
-                    {
-                        if (rootFrame.Content == null)
-                        {
-                            rootFrame.Navigate(typeof(MasterDetailPage));
-                        }
-                        Window.Current.Activate();
-                    }
-                }
-                void OnNavigationFailed(object sender, NavigationFailedEventArgs e)
-                {
-                    throw new Exception("Failed to load Page " + e.SourcePageType.FullName);
-                }
-                private void OnNavigated(object sender, NavigationEventArgs e)
-                {
-                    // Each time a navigation event occurs, update the Back button's visibility
-                    SystemNavigationManager.GetForCurrentView().AppViewBackButtonVisibility =
-                        ((Frame)sender).CanGoBack ?
-                        AppViewBackButtonVisibility.Visible :
-                        AppViewBackButtonVisibility.Collapsed;
-                }
-                private void OnSuspending(object sender, SuspendingEventArgs e)
-                {
-                    var deferral = e.SuspendingOperation.GetDeferral();
-                    //TODO: Save application state and stop any background activity
-                    deferral.Complete();
-                }
-
-                private void OnBackRequested(object sender, BackRequestedEventArgs e)
-                {
-                    Frame rootFrame = Window.Current.Content as Frame;
-
-                    if (rootFrame.CanGoBack)
-                    {
-                        e.Handled = true;
-                        rootFrame.GoBack();
-                    }
-                }*/
 
         /// <summary>
         ///  NEW CODE
         /// </summary>
         /// 
 
-        protected override void OnLaunched(LaunchActivatedEventArgs e)
+        protected async override void OnLaunched(LaunchActivatedEventArgs e)
         {
             Frame rootFrame = Window.Current.Content as Frame;
 
@@ -129,6 +68,7 @@ namespace GoyavPlace
                 }
                 // Register User
                 RegisterUser();
+                await SetupDevice();
                 // Place the frame in the current Window
                 Window.Current.Content = rootFrame;
                 // Register a handler for BackRequested events and set the  
@@ -143,6 +83,7 @@ namespace GoyavPlace
             // Ensure the current window is active
             Window.Current.Activate();
         }
+
         private void RootFrame_Navigated(object sender, NavigationEventArgs e)
         {
             // Each time a navigation event occurs, update the Back button's visibility  
@@ -194,15 +135,11 @@ namespace GoyavPlace
             {
                 //Wifi or Cellular
                 System.Diagnostics.Debug.WriteLine("SECOND RegisterUser");
-                var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
-                Object api_token = localSettings.Values["auth_token"];
                 bool connect = await isAuthenticatedUser();
                 if (!connect)
                 {
                     System.Diagnostics.Debug.WriteLine("CONNECT TO RegisterUser");
                     DataAuthToken token_value = await register();
-                    localSettings.Values["auth_token"] = token_value.auth_token.ToString();
-                    localSettings.Values["auth_token_id"] = token_value.id;
                     System.Diagnostics.Debug.WriteLine("TOKEN=NO:" + token_value);
                     System.Diagnostics.Debug.WriteLine("TOKEN_ID " + token_value.id);
                     System.Diagnostics.Debug.WriteLine("EN SORT A OU:");
@@ -229,6 +166,17 @@ namespace GoyavPlace
             System.Diagnostics.Debug.WriteLine("THIRD STEP 1 RegisterUser");
             Object api_token_id = localSettings.Values["auth_token_id"];
             System.Diagnostics.Debug.WriteLine("THIRD STEP 2 RegisterUser");
+            Object allowDate = localSettings.Values["allowDate"];
+            if (allowDate == null)
+            {
+                localSettings.Values["allowDate"] = false;
+            }
+            Object mesureUnit = localSettings.Values["unit"];
+            if (mesureUnit == null)
+            {
+                localSettings.Values["unit"] = false;
+            }
+
             if (api_token != null && api_token_id != null)
             {
                 // No data
@@ -245,7 +193,7 @@ namespace GoyavPlace
                 //Define Http Headers
                 httpClient.DefaultRequestHeaders.Accept.TryParseAdd("application/json");
                 //Call
-                string url = string.Format("{0}/v1/get_token.json?api_token={1}", App.IP_ADDRESS,api_token);
+                string url = string.Format("{0}/get_token.json?api_token={1}", App.IP_ADDRESS,api_token);
                 string ResponseString = await httpClient.GetStringAsync(
                     new Uri(url));
                 //Replace current URL with your URL
@@ -269,12 +217,14 @@ namespace GoyavPlace
         private async Task<DataAuthToken> register()
         {
             System.Diagnostics.Debug.WriteLine("REGISTER RegisterUser");
-
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
             EasClientDeviceInformation deviceInfo = new EasClientDeviceInformation();
             Dictionary<String, Object> ApiKey = new Dictionary<String, Object>();
             Dictionary<String, Object> ApiClient = new Dictionary<String, Object>();
             ApiClient["api_client"] = deviceInfo.SystemManufacturer;
             ApiClient["api_model"] = deviceInfo.SystemProductName;
+            ApiClient["api_app"] = App.APP_NAME;
+
             ApiKey["api_key"] = ApiClient;
 
             HttpClient httpClient = new HttpClient();
@@ -284,7 +234,7 @@ namespace GoyavPlace
             {
                 string postBody = JsonConvert.SerializeObject(ApiKey, Formatting.Indented);
                 System.Diagnostics.Debug.WriteLine("postBody  :" + postBody);
-                String resourceAddress = string.Format("{0}/v1/registrations.json",App.IP_ADDRESS);
+                String resourceAddress = string.Format("{0}/registrations.json",App.IP_ADDRESS);
                 System.Diagnostics.Debug.WriteLine("resourceAddress   :" + resourceAddress + ": Postbody :" + postBody);
                 httpClient.BaseAddress = new Uri(resourceAddress);
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
@@ -294,6 +244,11 @@ namespace GoyavPlace
                 authentication = JsonConvert.DeserializeObject<AuthToken>(responseString);
                 System.Diagnostics.Debug.WriteLine(responseString);
                 token = authentication.token;
+                if (wcfResponse.IsSuccessStatusCode)
+                {
+                    localSettings.Values["auth_token"] = authentication.token.auth_token.ToString();
+                    localSettings.Values["auth_token_id"] = authentication.token.id;
+                }
             }
             catch (HttpRequestException hre)
             {
@@ -316,6 +271,78 @@ namespace GoyavPlace
                 }
             }
             return token;
+        }
+        private async Task SetupDevice()
+        {
+
+            this.quoteTimer = new DispatcherTimer();
+            this.quoteTimer.Interval = TimeSpan.FromMinutes(2);
+            this.quoteTimer.Tick += this.quoteTimer_Tick;
+            this.quoteTimer.Start();
+        }
+
+        private void quoteTimer_Tick(object sender, object e)
+        {
+            updateUserPosition();
+        }
+        private async void updateUserPosition()
+        {
+            string resourceAddress = String.Empty;
+            HttpClient httpClient = new HttpClient();
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            if (localSettings.Values.ContainsKey("auth_token"))
+            {
+                //overwrite the value if you need to
+                Object api_token = localSettings.Values["auth_token"];
+                Object api_token_id = localSettings.Values["auth_token_id"];
+                Dictionary<String, Object> ApiKey = new Dictionary<String, Object>();
+                Dictionary<String, Object> ApiPosition = new Dictionary<String, Object>();
+
+                try
+                {
+                    _cts = new CancellationTokenSource();
+                    CancellationToken token = _cts.Token;
+                    // If DesiredAccuracy or DesiredAccuracyInMeters are not set (or value is 0), DesiredAccuracy.Default is used.
+                    Geolocator geolocator = new Geolocator { DesiredAccuracyInMeters = _desireAccuracyInMetersValue };
+                    // Carry out the operation
+                    Geoposition pos = await geolocator.GetGeopositionAsync().AsTask(token);
+                    ApiPosition["id"] = api_token_id;
+                    ApiPosition["latitude"] = pos.Coordinate.Point.Position.Latitude;
+                    ApiPosition["longitude"] = pos.Coordinate.Point.Position.Longitude;
+                    ApiPosition["online"] = true;
+                    ApiKey["api_key"] = ApiPosition;
+
+                    string postBody = JsonConvert.SerializeObject(ApiKey, Formatting.Indented);
+                    // Update 
+                    resourceAddress = string.Format("{0}/registrations/{1}.{2}", App.IP_ADDRESS, api_token_id, "json");
+                    httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                    HttpResponseMessage wcfResponse = await httpClient.PutAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
+                    var responseString = await wcfResponse.Content.ReadAsStringAsync();
+                    AddResponse RetResponse = JsonConvert.DeserializeObject<AddResponse>(responseString);
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine("Response String for updating api_key  " + responseString.ToString() + " Place :" + postBody);
+                    System.Diagnostics.Debug.WriteLine("Response String for ressource  " + resourceAddress.ToString() + " Place :" + postBody);
+#endif
+                }
+                catch (HttpRequestException hre)
+                {
+                }
+                catch (TaskCanceledException)
+                {
+                }
+                catch (Exception ex)
+                {
+                }
+                finally
+                {
+                    if (httpClient != null)
+                    {
+                        httpClient.Dispose();
+                        httpClient = null;
+                    }
+                }
+
+            }
         }
     }
 }

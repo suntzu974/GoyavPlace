@@ -153,4 +153,55 @@
   <data name="SLService.Header" xml:space="preserve">
     <value>Service</value>
   </data>
+  <data name="MasterTitle.Text" xml:space="preserve">
+    <value>Lieux</value>
+  </data>
+  <data name="allowDate.Header" xml:space="preserve">
+    <value>Autoriser le filtrage sur la date</value>
+  </data>
+  <data name="allowDate.OffContent" xml:space="preserve">
+    <value>Non</value>
+  </data>
+  <data name="allowDate.OnContent" xml:space="preserve">
+    <value>Oui</value>
+  </data>
+  <data name="unit.Header" xml:space="preserve">
+    <value>Unité</value>
+  </data>
+  <data name="unit.OffContent" xml:space="preserve">
+    <value>Kilomètre</value>
+  </data>
+  <data name="unit.OnContent" xml:space="preserve">
+    <value>Mètre</value>
+  </data>
+  <data name="allowMeeting.Header" xml:space="preserve">
+    <value>Faire des rencontres</value>
+  </data>
+  <data name="allowMeeting.OffContent" xml:space="preserve">
+    <value>Non</value>
+  </data>
+  <data name="allowMeeting.OnContent" xml:space="preserve">
+    <value>Oui</value>
+  </data>
+  <data name="address.PlaceholderText" xml:space="preserve">
+    <value>Adresse</value>
+  </data>
+  <data name="country.PlaceholderText" xml:space="preserve">
+    <value>Pays</value>
+  </data>
+  <data name="name.PlaceholderText" xml:space="preserve">
+    <value>Nom du lieu</value>
+  </data>
+  <data name="searchActive.Header" xml:space="preserve">
+    <value>Lieu actif</value>
+  </data>
+  <data name="searchActive.OffContent" xml:space="preserve">
+    <value>Inactif</value>
+  </data>
+  <data name="searchActive.OnContent" xml:space="preserve">
+    <value>Actif</value>
+  </data>
+  <data name="town.PlaceholderText" xml:space="preserve">
+    <value>Ville</value>
+  </data>
 </root>

@@ -47,7 +47,7 @@ namespace GoyavPlace
     /// </summary>
     public sealed partial class NewPlacePage : Page
     {
-        List<ImageItem> ImageList = new List<ImageItem>();
+       // List<ImageItem> ImageList = new List<ImageItem>();
         string base64Content = String.Empty;
         private uint _desireAccuracyInMetersValue = 0;
         private CancellationTokenSource _cts = null;
@@ -195,7 +195,7 @@ namespace GoyavPlace
                 Object api_token_id = localSettings.Values["auth_token_id"];
                 Dictionary<String, Object> PLACE = new Dictionary<String, Object>();
                 place.name = this.name.Text.ToUpper();
-                place.phone = this.phone.Text.ToUpper();
+                //place.phone = this.phone.Text.ToUpper();
                 location.town = this.town.Text.ToString();
                 location.address = this.address.Text.ToString();
                 location.country = this.country.Text.ToString();
@@ -226,7 +226,7 @@ namespace GoyavPlace
                 PLACE["place"] = place;
 
                 if (place.name != String.Empty && 
-                    place.phone != String.Empty && 
+                    //place.phone != String.Empty && 
                     place.Location.address != String.Empty &&
                     place.Location.town != String.Empty &&
                     place.Location.country != String.Empty)
@@ -237,14 +237,15 @@ namespace GoyavPlace
                     {
                         this.progress.IsActive = true;
                         //overwrite the value if you need to
-                        resourceAddress = string.Format("{0}/v2/places.json?auth_token={1}", App.IP_ADDRESS,api_token.ToString());
+                        resourceAddress = string.Format("{0}/places.json?auth_token={1}", App.IP_ADDRESS,api_token.ToString());
                         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                         HttpResponseMessage wcfResponse = await httpClient.PostAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
                         var responseString = await wcfResponse.Content.ReadAsStringAsync();
                         AddResponse RetResponse = JsonConvert.DeserializeObject<AddResponse>(responseString);
                         // Navigate to cocktail page with item you click/tap on
-                        #if DEBUG
-                            System.Diagnostics.Debug.WriteLine("Response String for new place " + responseString.ToString());
+                    #if DEBUG
+                        System.Diagnostics.Debug.WriteLine("posBody place " + postBody);
+                        System.Diagnostics.Debug.WriteLine("Response String for new place " + responseString.ToString());
                         #endif
                         NotifyUser("http response status code ." + wcfResponse.StatusCode, NotifyType.StatusMessage);
                         if (wcfResponse.IsSuccessStatusCode)
@@ -254,7 +255,7 @@ namespace GoyavPlace
                             this.address.Text = String.Empty;
                             this.town.Text = String.Empty;
                             this.country.Text = String.Empty;
-                            this.phone.Text = String.Empty;
+                            //this.phone.Text = String.Empty;
                             this.geolocation.Text = String.Empty;
                             this.progress.IsActive = false;
                             //this.Frame.Navigate(typeof(MainPage), string.Empty);
@@ -309,10 +310,7 @@ namespace GoyavPlace
                 await bitmapImage.SetSourceAsync(stream);
                 var decoder = await BitmapDecoder.CreateAsync(stream);
                 base64Content = Convert.ToBase64String(await CreateScaledImage2(decoder, 1024, 760));
-                ImageList.Add(new ImageItem(bitmapImage, base64Content));
-                #if DEBUG
-                    System.Diagnostics.Debug.WriteLine("ImageList count: " + ImageList.Count());
-                #endif
+                //ImageList.Add(new ImageItem(bitmapImage, base64Content));
                 picture.Source = bitmapImage;
             }
             else
@@ -335,10 +333,7 @@ namespace GoyavPlace
                 await bitmapImage.SetSourceAsync(stream);
                 var decoder = await BitmapDecoder.CreateAsync(stream);
                 base64Content = Convert.ToBase64String(await CreateScaledImage2(decoder, 760, 1024));
-                ImageList.Add(new ImageItem(bitmapImage, base64Content));
-                #if DEBUG
-                    System.Diagnostics.Debug.WriteLine("ImageList count: " + ImageList.Count());
-                #endif
+                //ImageList.Add(new ImageItem(bitmapImage, base64Content));
                 picture.Source = bitmapImage;
 
             }

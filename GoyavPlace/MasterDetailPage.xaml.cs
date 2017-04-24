@@ -9,12 +9,14 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Runtime.InteropServices.WindowsRuntime;
 using System.Threading.Tasks;
+using Windows.Devices.Geolocation;
 using Windows.Foundation;
 using Windows.Foundation.Collections;
 using Windows.Storage.Streams;
 using Windows.UI.Core;
 using Windows.UI.Xaml;
 using Windows.UI.Xaml.Controls;
+using Windows.UI.Xaml.Controls.Maps;
 using Windows.UI.Xaml.Controls.Primitives;
 using Windows.UI.Xaml.Data;
 using Windows.UI.Xaml.Input;
@@ -33,6 +35,7 @@ namespace GoyavPlace
     public sealed partial class MasterDetailPage : Page
     {
         private PlaceData _lastSelectedItem;
+        List<PlaceData> listOfPlaces = new List<PlaceData>();
 
         public MasterDetailPage()
         {
@@ -48,6 +51,7 @@ namespace GoyavPlace
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
             var items = e.Parameter as List<PlaceData>;
+            listOfPlaces = e.Parameter as List<PlaceData>;
             base.OnNavigatedTo(e);
             if (items != null)
             {
@@ -138,6 +142,37 @@ namespace GoyavPlace
             if (DetailContentPresenter != null)
             {
                 DetailContentPresenter.ContentTransitions.Clear();
+            }
+        }
+
+        private void getIndex(object sender, SelectionChangedEventArgs e)
+        {
+            var pivot = this.mapsPivot.SelectedIndex;
+            if (pivot == 1)
+            {
+                placeMap.MapServiceToken = "hhsGCt9NnTPzFSDLqtQE~-lHPBfyxJXelWFsjueAo-w~AuWF2cq1VKSnPzf9w6DtpnSKE20eL8AcuDHVRTJglKs671qn6bU9QVUao4QT_-Js";
+
+                // Specify a known location.
+                //   | 
+
+                // Places
+                foreach (PlaceData place in listOfPlaces)
+                {
+                    BasicGeoposition snPosition = new BasicGeoposition() { Latitude = place.Location.latitude, Longitude = place.Location.longitude };
+                    Geopoint snPoint = new Geopoint(snPosition);
+                    MapIcon myPOI = new MapIcon { Location = snPoint, NormalizedAnchorPoint = new Point(0.5, 1.0), Title = place.name.ToString() , ZIndex = 0 };
+                    // add to map and center it
+                    placeMap.MapElements.Add(myPOI);
+                    placeMap.Center = snPoint;
+
+#if DEBUG
+                    System.Diagnostics.Debug.WriteLine("Latitude : " + snPosition.Latitude.ToString()+ " Name :" + place.name.ToString());
+#endif
+                }
+                // Create a MapIcon.
+
+                // Center the map over the POI.
+                placeMap.ZoomLevel = 10;
             }
         }
     }

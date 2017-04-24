@@ -153,4 +153,55 @@
   <data name="SLService.Header" xml:space="preserve">
     <value>Service</value>
   </data>
+  <data name="MaserTitle.Text" xml:space="preserve">
+    <value>Places founded</value>
+  </data>
+  <data name="allowDate.Header" xml:space="preserve">
+    <value>Allow date filter</value>
+  </data>
+  <data name="allowDate.OffContent" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="allowDate.OnContent" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="unit.Header" xml:space="preserve">
+    <value>Mesure unit</value>
+  </data>
+  <data name="unit.OffContent" xml:space="preserve">
+    <value>Kilometer</value>
+  </data>
+  <data name="unit.OnContent" xml:space="preserve">
+    <value>Meter</value>
+  </data>
+  <data name="allowMeeting.Header" xml:space="preserve">
+    <value>Allow meeting</value>
+  </data>
+  <data name="allowMeeting.OffContent" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="allowMeeting.OnContent" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="address.PlaceholderText" xml:space="preserve">
+    <value>Address of place</value>
+  </data>
+  <data name="country.PlaceholderText" xml:space="preserve">
+    <value>Country of place</value>
+  </data>
+  <data name="name.PlaceholderText" xml:space="preserve">
+    <value>Name of place</value>
+  </data>
+  <data name="searchActive.Header" xml:space="preserve">
+    <value>Active place</value>
+  </data>
+  <data name="searchActive.OffContent" xml:space="preserve">
+    <value>Inactive</value>
+  </data>
+  <data name="searchActive.OnContent" xml:space="preserve">
+    <value>Active</value>
+  </data>
+  <data name="town.PlaceholderText" xml:space="preserve">
+    <value>Town of place</value>
+  </data>
 </root>

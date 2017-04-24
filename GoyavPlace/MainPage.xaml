@@ -16,7 +16,7 @@
             <AppBarButton x:Name="searchWithFind" Icon="Find" Label="appbarbutton" Click="searchPlaces" />
             <AppBarButton Icon="Add" Label="appbarbutton" Click="addPlace"/>
             <AppBarButton x:Name="settingsButton" Icon="Setting" Label="Settings" Click="editSettings"/>
-            <AppBarButton x:Name="RateButton" Icon="Calculator" Label="Rates" Click="manageRates" Visibility="Collapsed" />
+            <AppBarButton x:Name="RateButton" Icon="Calculator" Label="Rates" Click="manageRates"  />
         </CommandBar>
     </Page.BottomAppBar>
 
@@ -42,7 +42,7 @@
                     <CheckBox x:Uid="searchHotel" x:Name="searchHotel" RelativePanel.Below="searchRestaurant" Content="Hotel" MinWidth="60" IsChecked="True"  Margin="20,10,0,0" />
                 </StackPanel>
                 <StackPanel  Orientation="Horizontal" Margin="20">
-                        <ToggleSwitch x:Name="searchActive" Header="Actve place ?" OffContent="Inactive" OnContent="Active" IsOn="True" Margin="40,0,0,0" />
+                        <ToggleSwitch x:Uid="searchActive" x:Name="searchActive" Header="Active place ?" OffContent="Inactive" OnContent="Active" IsOn="True" Margin="40,0,0,0"  />
                 </StackPanel>
             </StackPanel>
             <StackPanel RelativePanel.Below="check" Orientation="Vertical">

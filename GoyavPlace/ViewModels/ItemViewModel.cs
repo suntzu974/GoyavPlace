@@ -102,6 +102,8 @@ namespace GoyavPlace.ViewModels
         public string id { get; set; }
         [DataMember(Name = "encoded")]
         public string encoded { get; set; }
+        [DataMember(Name = "shared")]
+        public string shared { get; set; }
         public BitmapImage base64Decoded { get; set; }
     }
     [DataContract]
@@ -148,8 +150,6 @@ namespace GoyavPlace.ViewModels
         public int id { get; set; }
         [DataMember(Name = "name")]
         public string name { get; set; }
-        [DataMember(Name = "phone")]
-        public string phone { get; set; }
         [DataMember(Name = "api_key_id")]
         public int api_key_id { get; set; }
         [DataMember(Name = "pictures")]
@@ -280,7 +280,24 @@ namespace GoyavPlace.ViewModels
         [DataMember(Name = "photos")]
         public Photo[] photos { get; set; }
     }
+    [DataContract]
+    public class SharedPicture 
+    {
+        [DataMember(Name = "id")]
+        public string encoded { get; set; }
+        [DataMember(Name = "shared_picture")]
+        public string shared { get; set; }
+    }
 
-
+    [DataContract]
+    public class ResponseShared
+    {
+        [DataMember(Name = "success")]
+        public string success { get; set; }
+        [DataMember(Name = "status")]
+        public string status { get; set; }
+        [DataMember(Name = "shared")]
+        public SharedPicture shared { get; set; }
+    }
 
 }

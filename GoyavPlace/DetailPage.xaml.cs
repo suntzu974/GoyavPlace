@@ -28,21 +28,22 @@ using Windows.Media.Capture;
 using Windows.UI.Xaml.Media.Imaging;
 using Windows.Graphics.Imaging;
 using Windows.Storage.Streams;
+using Windows.Devices.Geolocation;
+using Windows.UI.Xaml.Controls.Maps;
+using Windows.Foundation;
+using Windows.ApplicationModel.DataTransfer;
+using System.IO;
 
 // The Blank Page item template is documented at http://go.microsoft.com/fwlink/?LinkId=234238
 
 namespace GoyavPlace
 {
-    public class FBReturnObject
-    {
-        public string Id { get; set; }
-        public string Post_Id { get; set; }
-    }
-
-
+    
     /// <summary>
     /// An empty page that can be used on its own or navigated to within a Frame.
     /// </summary>
+    /// 
+
     public sealed partial class DetailPage : Page
     {
 
@@ -51,7 +52,9 @@ namespace GoyavPlace
         CategoryData category = new CategoryData();
         Tweet tweet = new Tweet();
         Photo photo = new Photo();
+        SharedPicture shared = new SharedPicture();
         string base64Content = String.Empty;
+        private DataTransferManager dataTransferManager;
         public DetailPage()
         {
             this.InitializeComponent();
@@ -61,8 +64,8 @@ namespace GoyavPlace
         protected override void OnNavigatedFrom(NavigationEventArgs e)
         {
             base.OnNavigatedFrom(e);
+            dataTransferManager.DataRequested -= DataTransferManager_DataRequested;
         }
-
 
         protected override void OnNavigatedTo(NavigationEventArgs e)
         {
@@ -72,7 +75,7 @@ namespace GoyavPlace
             #endif
             this.name.Text = place.name.ToString();
             this.address.Text = place.Location.address.ToString();
-            this.phone.Text = place.phone.ToString();
+            //this.phone.Text = place.phone.ToString();
             this.town.Text = place.Location.town.ToString();
             this.country.Text = place.Location.country.ToString();
             this.geolocation.Text = "Lat:"+place.Location.latitude.ToString("n2")+",Lng :"+place.Location.longitude.ToString("n2");
@@ -112,6 +115,10 @@ namespace GoyavPlace
             }
             getTweets();
             getPhotos();
+            getShared();
+            dataTransferManager = DataTransferManager.GetForCurrentView();
+            dataTransferManager.DataRequested += DataTransferManager_DataRequested;
+
         }
 
 
@@ -168,6 +175,40 @@ namespace GoyavPlace
                 NavigateBackForWideState(useTransition: false);
             }
         }
+        private async void getShared()
+        {
+            try
+            {
+                progress.IsActive = true;
+                //Create HttpClient
+                HttpClient httpClient = new HttpClient();
+                //Define Http Headers
+                httpClient.DefaultRequestHeaders.Accept.TryParseAdd("application/json");
+                String addressForShared = string.Format("{0}/shared.json?place_id={1}", App.IP_ADDRESS, place.id);
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine("Address shared !!" + addressForShared.ToString());
+#endif
+                httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
+                HttpResponseMessage wcfResponse = await httpClient.GetAsync(addressForShared);
+                var responseString = await wcfResponse.Content.ReadAsStringAsync();
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine("GET Response shared !!" + responseString.ToString());
+#endif
+                //Replace current URL with your URL
+                ResponseShared data = JsonConvert.DeserializeObject<ResponseShared>(responseString);
+                shared.shared = data.shared.shared;
+                if (wcfResponse.IsSuccessStatusCode)
+                {
+                    progress.IsActive = false;
+                }
+            }
+
+            catch (Exception ex)
+            {
+                //....
+            }
+
+        }
         private async void getPhotos()
         {
             photoGrid.Items.Clear();
@@ -178,13 +219,16 @@ namespace GoyavPlace
                 HttpClient httpClient = new HttpClient();
                 //Define Http Headers
                 httpClient.DefaultRequestHeaders.Accept.TryParseAdd("application/json");
-                String addressForPhotos = string.Format("{0}/v2/search_photos.json?place_id={1}", App.IP_ADDRESS, place.id);
+                String addressForPhotos = string.Format("{0}/search_photos.json?place_id={1}", App.IP_ADDRESS, place.id);
 
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 HttpResponseMessage wcfResponse = await httpClient.GetAsync(addressForPhotos);
                 var responseString = await wcfResponse.Content.ReadAsStringAsync();
                 //Replace current URL with your URL
                 ResponsePhoto data = JsonConvert.DeserializeObject<ResponsePhoto>(responseString);
+#if DEBUG
+                System.Diagnostics.Debug.WriteLine("Get Response Photos  !!" + responseString.ToString());
+#endif
                 if (data.photos.Count() > 0)
                 {
                     noteGrid.Visibility = Visibility.Visible;
@@ -221,7 +265,7 @@ namespace GoyavPlace
                 HttpClient httpClient = new HttpClient();
                 //Define Http Headers
                 httpClient.DefaultRequestHeaders.Accept.TryParseAdd("application/json");
-                String addressForTweets = string.Format("{0}/v2/search_tweets.json?place_id={1}", App.IP_ADDRESS, place.id);
+                String addressForTweets = string.Format("{0}/search_tweets.json?place_id={1}", App.IP_ADDRESS, place.id);
 
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 HttpResponseMessage wcfResponse = await httpClient.GetAsync(addressForTweets);
@@ -292,7 +336,7 @@ namespace GoyavPlace
 
         private void getCall(object sender, RoutedEventArgs e)
         {
-            Windows.ApplicationModel.Calls.PhoneCallManager.ShowPhoneCallUI(place.phone.ToString(), place.name.ToString());
+           // Windows.ApplicationModel.Calls.PhoneCallManager.ShowPhoneCallUI(place.phone.ToString(), place.name.ToString());
         }
 
         private async void getLike(object sender, RoutedEventArgs e)
@@ -316,7 +360,7 @@ namespace GoyavPlace
 
 
                 if (place.name != String.Empty &&
-                    place.phone != String.Empty &&
+                    //place.phone != String.Empty &&
                     place.Location.address != String.Empty &&
                     place.Location.town != String.Empty &&
                     place.Location.country != String.Empty)
@@ -328,7 +372,7 @@ namespace GoyavPlace
                         if (Convert.ToInt16(api_token_id) == place.api_key_id)
                         {
                             // Update 
-                            resourceAddress = string.Format("{0}/v2/evaluations/{1}.{2}", App.IP_ADDRESS,place.Evaluation.id, "json");
+                            resourceAddress = string.Format("{0}/evaluations/{1}.{2}", App.IP_ADDRESS,place.Evaluation.id, "json");
                             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                             HttpResponseMessage wcfResponse = await httpClient.PutAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
                             var responseString = await wcfResponse.Content.ReadAsStringAsync();
@@ -363,68 +407,6 @@ namespace GoyavPlace
                 {
                     NotifyUser("all fields must be filled.", NotifyType.ErrorMessage);
                 }
-            }
-
-        }
-
-        private async void getShare(object sender, RoutedEventArgs e)
-        {
-            FBSession sess = FBSession.ActiveSession;
-            sess.FBAppId = "204650499987919";
-            sess.WinAppId = "s-1-15-2-4184798398-3214885102-1243361708-2144477766-3872497592-3011963963-154036082";
-
-            // Add permissions required by the app
-            List<String> permissionList = new List<String>();
-            permissionList.Add("public_profile");
-            permissionList.Add("user_friends");
-            permissionList.Add("user_likes");
-            permissionList.Add("user_groups");
-            permissionList.Add("user_location");
-            permissionList.Add("user_photos");
-            permissionList.Add("publish_actions");
-            FBPermissions permissions = new FBPermissions(permissionList);
-
-            // Login to Facebook
-            FBResult result = await sess.LoginAsync(permissions);
-
-            if (result.Succeeded)
-            {
-                //Login successful
-                // Get current user
-                FBUser user = sess.User;
-                // Set caption, link and description parameters
-                PropertySet parameters = new PropertySet();
-                parameters.Add("title", "Microsoft");
-                parameters.Add("link", "https://www.microsoft.com/en-us/default.aspx");
-                parameters.Add("description", "Microsoft home page");
-                // Add post message
-                parameters.Add("message", "Posting from my Universal Windows app.");
-                // Set Graph api path
-                string path = "/" + user.Id + "/feed";
-                var factory = new FBJsonClassFactory(s =>
-                {
-                    return JsonConvert.DeserializeObject<FBReturnObject>(s);
-                });
-                var singleValue = new FBSingleValue(path, parameters, factory);
-                var resultat = await singleValue.PostAsync();
-                if (resultat.Succeeded)
-                {
-                    var response = resultat.Object as FBReturnObject;
-                }
-                else
-                {
-                    // Posting failed
-#if DEBUG
-                    System.Diagnostics.Debug.WriteLine("Post to facebook failed");
-#endif
-                }
-            }
-            else
-            {
-                //Login failed
-#if DEBUG
-                System.Diagnostics.Debug.WriteLine("Login to facebook failed");
-#endif
             }
 
         }
@@ -502,7 +484,7 @@ namespace GoyavPlace
 
 
                 if (place.name != String.Empty &&
-                    place.phone != String.Empty &&
+                    //place.phone != String.Empty &&
                     place.Location.address != String.Empty &&
                     place.Location.town != String.Empty &&
                     place.Location.country != String.Empty)
@@ -514,7 +496,7 @@ namespace GoyavPlace
                         if (Convert.ToInt16(api_token_id) == place.api_key_id)
                         {
                             // Update 
-                            resourceAddress = string.Format("{0}/v2/evaluations/{1}.{2}", App.IP_ADDRESS,place.Evaluation.id, "json");
+                            resourceAddress = string.Format("{0}/evaluations/{1}.{2}", App.IP_ADDRESS,place.Evaluation.id, "json");
                             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                             HttpResponseMessage wcfResponse = await httpClient.PutAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
                             var responseString = await wcfResponse.Content.ReadAsStringAsync();
@@ -528,7 +510,7 @@ namespace GoyavPlace
                         else
                         {
                             // Create
-                            resourceAddress = string.Format("{0}/v2/evaluations.json",App.IP_ADDRESS);
+                            resourceAddress = string.Format("{0}/evaluations.json",App.IP_ADDRESS);
                             httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                             HttpResponseMessage wcfResponse = await httpClient.PostAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
                             var responseString = await wcfResponse.Content.ReadAsStringAsync();
@@ -641,7 +623,7 @@ namespace GoyavPlace
             {
                 string postBody = JsonConvert.SerializeObject(CATEGORY, Formatting.Indented);
                 // Update 
-                resourceAddress = string.Format("{0}/v2/categories/{1}.{2}", App.IP_ADDRESS,place.Category.id, "json");
+                resourceAddress = string.Format("{0}/categories/{1}.{2}", App.IP_ADDRESS,place.Category.id, "json");
                 httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                 HttpResponseMessage wcfResponse = await httpClient.PutAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
                 var responseString = await wcfResponse.Content.ReadAsStringAsync();
@@ -697,8 +679,17 @@ namespace GoyavPlace
             }
             if (pivot == 3)
             {
-                System.Diagnostics.Debug.WriteLine("Index Tarif");
+                System.Diagnostics.Debug.WriteLine("Index Map");
                 this.refreshButton.Visibility = Visibility.Collapsed;
+                        mapDetail.MapServiceToken = "hhsGCt9NnTPzFSDLqtQE~-lHPBfyxJXelWFsjueAo-w~AuWF2cq1VKSnPzf9w6DtpnSKE20eL8AcuDHVRTJglKs671qn6bU9QVUao4QT_-Js";
+                        BasicGeoposition snPosition = new BasicGeoposition() { Latitude = place.Location.latitude, Longitude = place.Location.longitude };
+                        Geopoint snPoint = new Geopoint(snPosition);
+                        MapIcon myPOI = new MapIcon { Location = snPoint, NormalizedAnchorPoint = new Point(0.5, 1.0), Title = place.name.ToString(), ZIndex = 0 };
+                        // add to map and center it
+                        mapDetail.MapElements.Add(myPOI);
+                        mapDetail.Center = snPoint;
+                        // Center the map over the POI.
+                        mapDetail.ZoomLevel = 16;
             }
             if (pivot == 4)
             {
@@ -736,7 +727,7 @@ namespace GoyavPlace
                         progress.IsActive = true;
 
                         //overwrite the value if you need to
-                        resourceAddress = string.Format("{0}/v2/photos.json", App.IP_ADDRESS);
+                        resourceAddress = string.Format("{0}/photos.json", App.IP_ADDRESS);
                         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                         HttpResponseMessage wcfResponse = await httpClient.PostAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
                         var responseString = await wcfResponse.Content.ReadAsStringAsync();
@@ -921,7 +912,7 @@ namespace GoyavPlace
                     try
                     {
                         //overwrite the value if you need to
-                        resourceAddress = string.Format("{0}/v2/tweets.json?place_id={1}?api_key_id={2}&tweet{3}", App.IP_ADDRESS,tweet.place_id, tweet.api_key_id, tweet.tweet);
+                        resourceAddress = string.Format("{0}/tweets.json?place_id={1}?api_key_id={2}&tweet{3}", App.IP_ADDRESS,tweet.place_id, tweet.api_key_id, tweet.tweet);
                         httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                         HttpResponseMessage wcfResponse = await httpClient.PostAsync(resourceAddress, new StringContent(postBody, Encoding.UTF8, "application/json"));
                         var responseString = await wcfResponse.Content.ReadAsStringAsync();
@@ -969,6 +960,45 @@ namespace GoyavPlace
             getTweets();
         }
 
+        private void DataTransferManager_DataRequested(DataTransferManager sender, DataRequestedEventArgs args)
+        {
+            DataRequest request = args.Request;
+            ShareText(request);
+        }
+
+        /// <summary>
+        /// set text to request data
+        /// </summary>
+        /// <param name="request"></param>
+        private void ShareText(DataRequest request)
+        {
+            if (this.country.Text.Trim().Equals(string.Empty))
+            {
+                request.FailWithDisplayText("Enter text you would like to share and try again.");
+            }
+            else
+            {
+                Uri uri = new Uri("https://www.goyav.re");
+                request.Data.SetBitmap(RandomAccessStreamReference.CreateFromStream(ConvertTo(Convert.FromBase64String(shared.shared))));
+                request.Data.SetText(this.name.Text.Trim()+"\n"
+                                        +this.address.Text.Trim()+"\n"
+                                        +this.town.Text.Trim()+"\t"
+                                        +this.country.Text.Trim());
+                request.Data.SetWebLink(uri);
+                request.Data.Properties.Title = "Goyav Inc";
+            }
+        }
+        internal static IRandomAccessStream ConvertTo(byte[] arr)
+        {
+            MemoryStream stream = new MemoryStream(arr);
+            return stream.AsRandomAccessStream();
+        }
+        private void shareAppData(object sender, RoutedEventArgs e)
+        {
+            DataTransferManager.ShowShareUI();
+        }
+
+        /// <summary>
     }
 
 }

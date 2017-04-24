@@ -48,8 +48,27 @@ namespace GoyavPlace
             Current = this;
             DateTime thisDay = DateTime.Today;
             this.begindate.Date = thisDay;
-        }
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            Object searchAllowDate = localSettings.Values["allowDate"];
+            if (searchAllowDate != null)
+            {
+                if (!(bool)searchAllowDate)
+                {
+                    this.begindate.Visibility = Visibility.Collapsed;
+                    this.updated_at.Visibility = Visibility.Collapsed;
+                }
+            }
+            Object unit = localSettings.Values["unit"];
+            if ((bool)unit)
+            {
+                searchDistance.Maximum = 1000;
+            }
+            else
+            {
+                searchDistance.Maximum = 100;
+            }
 
+        }
         // Distance
         private double distance(double lat1, double lon1, double lat2, double lon2, char unit)
         {
@@ -113,10 +132,15 @@ namespace GoyavPlace
 
             var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
             Object unit = localSettings.Values["unit"];
-            if (!(bool)unit)
+            if ((bool)unit)
+            {
                 displayDistance.Text = "Distance : " + slider.Value.ToString("n2") + " M";
+            }
             else
+            {
                 displayDistance.Text = "Distance : " + slider.Value.ToString("n2") + " KM";
+
+            }
 
             System.Diagnostics.Debug.WriteLine("distance from !!" + distance_from.ToString());
         }
@@ -213,10 +237,8 @@ namespace GoyavPlace
                 categories.Add(3);
             if (searchRestaurant.IsChecked == true)
                 categories.Add(4);
-
-            // Search place
-                try
-                {
+            try
+            {
                     progress.IsActive = true;
                     List<PlaceData> ListOfPlaces = new List<PlaceData>();
                     //Create HttpClient
@@ -225,13 +247,17 @@ namespace GoyavPlace
                     httpClient.DefaultRequestHeaders.Accept.TryParseAdd("application/json");
                     var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
                     Object unit = localSettings.Values["unit"];
-                    if (!(bool)unit)
+                    if ((bool)unit)
                         distance_from = distance_from / 1000;
 
-                    if (distance_from == 0)
-                        addressForSearch = string.Format("{0}/v2/search.json?latitude={1}&longitude={2}&category={3}&start_date={4}", App.IP_ADDRESS,latitude, longitude, string.Join(", ", categories), searchDate.ToString("yyyy-MM-dd"));
+                    Object allowDate = localSettings.Values["allowDate"];
+                    if (!(bool)allowDate) 
+                        searchDate = new DateTime(1970, 01, 01);
+
+                if (distance_from == 0)
+                        addressForSearch = string.Format("{0}/search.json?latitude={1}&longitude={2}&category={3}&start_date={4}", App.IP_ADDRESS,latitude, longitude, string.Join(", ", categories), searchDate.ToString("yyyy-MM-dd"));
                     else
-                        addressForSearch = string.Format("{0}/v2/search.json?latitude={1}&longitude={2}&distance={3}&category={4}&start_date={5}", App.IP_ADDRESS,latitude, longitude, distance_from, string.Join(", ", categories), searchDate.ToString("yyyy-MM-dd"));
+                        addressForSearch = string.Format("{0}/search.json?latitude={1}&longitude={2}&distance={3}&category={4}&start_date={5}", App.IP_ADDRESS,latitude, longitude, distance_from.ToString(System.Globalization.NumberFormatInfo.InvariantInfo), string.Join(", ", categories), searchDate.ToString("yyyy-MM-dd"));
 
                     httpClient.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/json"));
                     HttpResponseMessage wcfResponse = await httpClient.GetAsync(addressForSearch);
@@ -271,7 +297,7 @@ namespace GoyavPlace
 
         private void manageRates(object sender, RoutedEventArgs e)
         {
-            this.Frame.Navigate(typeof(RatePage));
+            this.Frame.Navigate(typeof(XMPPPage));
         }
     }
 }

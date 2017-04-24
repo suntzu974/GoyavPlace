@@ -5,7 +5,7 @@
     xmlns:local="using:GoyavPlace"
     xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
     xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
-    mc:Ignorable="d">
+    mc:Ignorable="d" Height="474.667" Width="666.667">
     <Page.BottomAppBar>
         <CommandBar>
             <CommandBar.Content>
@@ -58,21 +58,21 @@
                     </StackPanel>
                 </StackPanel>
                 <StackPanel Orientation="Vertical" Margin="5,10,10,10" Padding="5">
-                    <TextBox x:Name="name" HorizontalAlignment="Left" Margin="1,0,10,5" TextWrapping="Wrap" Text="" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" PlaceholderText="Name of place" MinWidth="270" MinHeight="33" BorderThickness="1" />
-                    <TextBox x:Name="address" HorizontalAlignment="Left" Margin="1,0,10,5" TextWrapping="Wrap" Text="" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" PlaceholderText="Address of place" MinWidth="270" MinHeight="33" BorderThickness="1" />
+                    <TextBox x:Uid="name" x:Name="name" HorizontalAlignment="Left" Margin="1,0,10,5" TextWrapping="Wrap" Text="" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" PlaceholderText="Name of place" MinWidth="270" MinHeight="33" BorderThickness="1" />
+                    <TextBox x:Uid="address" x:Name="address" HorizontalAlignment="Left" Margin="1,0,10,5" TextWrapping="Wrap" Text="" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" PlaceholderText="Address of place" MinWidth="270" MinHeight="33" BorderThickness="1" />
                     <StackPanel Orientation="Horizontal" Margin="0,5">
-                        <TextBox x:Name="town" PlaceholderText="Town of place" MinWidth="125" MinHeight="33" HorizontalAlignment="Left" Width="118" Margin="1,0,5,5" BorderThickness="1" />
-                        <TextBox x:Name="country" PlaceholderText="Country of place" MinWidth="140" MinHeight="33" Margin="0,0,0,5" BorderThickness="1" />
+                        <TextBox x:Uid="town" x:Name="town" PlaceholderText="Town of place" MinWidth="125" MinHeight="33" HorizontalAlignment="Left" Width="118" Margin="1,0,5,5" BorderThickness="1" />
+                        <TextBox x:Uid="country" x:Name="country" PlaceholderText="Country of place" MinWidth="140" MinHeight="33" Margin="0,0,0,5" BorderThickness="1" />
                     </StackPanel>
-                    <TextBox x:Name="phone" HorizontalAlignment="Left" Margin="1,0,10,5" TextWrapping="Wrap" Text="" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" PlaceholderText="Phone" MinWidth="270" MinHeight="33" InputScope="TelephoneNumber" BorderThickness="1" />
+                    <TextBox x:Name="phone" HorizontalAlignment="Left" Margin="1,0,10,5" TextWrapping="Wrap" Text="" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" PlaceholderText="Phone" MinWidth="270" MinHeight="33" InputScope="TelephoneNumber" BorderThickness="1" Visibility="Collapsed" />
                     <TextBox x:Name="geolocation" HorizontalAlignment="Left" Margin="1,5,10,5" TextWrapping="Wrap" Text="" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" PlaceholderText="Geolocation" MinWidth="270" MinHeight="33" BorderThickness="1" />
                     <TextBox x:Name="accuracy" HorizontalAlignment="Left" Margin="10,0,10,5" TextWrapping="Wrap" Text="" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" PlaceholderText="accuracy" MinWidth="275" MinHeight="33" Visibility="Collapsed" />
                 </StackPanel>
                 <StackPanel Orientation="Horizontal" Margin="5,0" Height="84">
                     <StackPanel Orientation="Horizontal">
-                        <Slider x:Name="slPrice" Margin="10,0,10,0" Maximum="3" LargeChange="1" Orientation="Vertical"  ValueChanged="slPriceChanged" Header="Price" MinWidth="80" Minimum="1" />
-                        <Slider x:Name="slQuality" Margin="10,0,10,0" Orientation="Vertical" Maximum="3" LargeChange="1"  ValueChanged="slQualityChanged" Header="Quality" MinWidth="80" Minimum="1" />
-                        <Slider x:Name="slService" Margin="10,0,10,0" Maximum="3" LargeChange="1" Orientation="Vertical" Height="84" ValueChanged="slServiceChanged" Header="Service" MinWidth="80" Minimum="1" />
+                        <Slider x:Uid="slPrice" x:Name="slPrice" Margin="10,0,10,0" Maximum="3" LargeChange="1" Orientation="Vertical"  ValueChanged="slPriceChanged" Header="Price" MinWidth="80" Minimum="1" />
+                        <Slider x:Uid="slQuality" x:Name="slQuality" Margin="10,0,10,0" Orientation="Vertical" Maximum="3" LargeChange="1"  ValueChanged="slQualityChanged" Header="Quality" MinWidth="80" Minimum="1" />
+                        <Slider x:Uid="slService"  x:Name="slService" Margin="10,0,10,0" Maximum="3" LargeChange="1" Orientation="Vertical" Height="84" ValueChanged="slServiceChanged" Header="Service" MinWidth="80" Minimum="1" />
                     </StackPanel>
                 </StackPanel>
                 <StackPanel Orientation="Vertical" Margin="5">

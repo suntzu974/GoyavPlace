@@ -14,14 +14,16 @@
                 <TextBlock x:Name="textBlock" HorizontalAlignment="Left" Margin="20,0" Text="Settings " VerticalAlignment="Top" FontSize="24" FontWeight="Bold" Width="284" TextWrapping="Wrap" Padding="100,0,0,0" />
             </Border>
         </StackPanel>
-        <StackPanel Orientation="Vertical" Margin="0,50,0,0">
-            <ScrollViewer>
-                <StackPanel Orientation="Vertical">
-                    <ToggleSwitch x:Name="unit" OnContent="Kilometer" OffContent="Meter" Width="293" Margin="20,0,0,0" Header="Unit" Toggled="changeUnit" />
-                    <TextBlock x:Name="ApiKey" Text="ApiKey" Margin="20,10,0,0" />
-                </StackPanel>
-            </ScrollViewer>
-        </StackPanel>
+            <StackPanel Orientation="Vertical" Margin="0,50,0,0">
+                <ScrollViewer>
+                    <StackPanel Orientation="Vertical">
+                        <ToggleSwitch x:Uid="unit" Name="unit" OnContent="Kilometer" OffContent="Meter" Width="293" Margin="20,0,0,0" Header="Unit" Toggled="changeUnit" />
+                        <TextBlock x:Name="ApiKey" Text="ApiKey" Margin="20,10,0,0" />
+                        <ToggleSwitch x:Uid="allowDate" x:Name="allowDate" OnContent="Yes" OffContent="No" Width="293" Margin="20,20,0,1" Header="Allow date filtering" Toggled="changeAllowDate" />
+                        <ToggleSwitch x:Uid="allowMeeting" x:Name="allowMeeting" OnContent="Yes" OffContent="No" Width="293" Margin="20,20,0,1" Header="Meet people" Toggled="changeAllowMeeting" />
+                    </StackPanel>
+                </ScrollViewer>
+            </StackPanel>
         </StackPanel>
     </Grid>
 </Page>

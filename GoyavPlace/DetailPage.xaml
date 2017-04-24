@@ -1,4 +1,4 @@
-﻿<Page
+﻿<Page xmlns:my="using:Windows.UI.Xaml.Controls.Maps" 
     x:Class="GoyavPlace.DetailPage"
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
@@ -15,9 +15,9 @@
                 </Grid>
             </CommandBar.Content>
 
-            <AppBarButton Icon="CellPhone" Label="Call Phone" Click="getCall"/>
+            <AppBarButton Icon="CellPhone" Label="Call Phone" Click="getCall" Visibility="Collapsed"/>
             <AppBarButton Icon="Directions" Label="Drive to" Click="getDrive"/>
-            <AppBarButton x:Name="appBarButton3" Icon="ReShare" Label="Share" Click="getShare" Visibility="Collapsed"/>
+            <AppBarButton x:Name="shareData" Icon="ReShare" Label="Share" Click="shareAppData"/>
             <AppBarButton x:Name="likeButton" Icon="Like" Label="Like" Click="getLike"/>
             <AppBarButton x:Name="refreshButton" Icon="Refresh" Label="Refresh notes" Click="refreshNotes" />
         </CommandBar>
@@ -72,7 +72,7 @@
                                         <TextBox x:Name="town" PlaceholderText="Town of place" MinWidth="125" MinHeight="33" HorizontalAlignment="Left" Width="118" Margin="1,0,5,5" BorderThickness="1" />
                                         <TextBox x:Name="country" PlaceholderText="Country of place" MinWidth="140" MinHeight="33" Margin="0,0,0,5" BorderThickness="1" />
                                     </StackPanel>
-                                    <TextBox x:Name="phone" HorizontalAlignment="Left" Margin="1,0,10,1" TextWrapping="Wrap" Text="" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" PlaceholderText="Phone" MinWidth="270" MinHeight="33" InputScope="TelephoneNumber" BorderThickness="1" />
+                                    <TextBox x:Name="phone" HorizontalAlignment="Left" Margin="1,0,10,1" TextWrapping="Wrap" Text="" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" PlaceholderText="Phone" MinWidth="270" MinHeight="33" InputScope="TelephoneNumber" BorderThickness="1" Visibility="Collapsed" />
                                     <TextBox x:Name="geolocation" HorizontalAlignment="Left" Margin="1,5,10,5" TextWrapping="Wrap" Text="" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" PlaceholderText="Geolocation" MinWidth="270" MinHeight="33" BorderThickness="1" Visibility="Collapsed" />
                                     <TextBox x:Name="accuracy" HorizontalAlignment="Left" Margin="10,0,10,5" TextWrapping="Wrap" Text="" VerticalAlignment="Top" RenderTransformOrigin="0.5,0.5" PlaceholderText="accuracy" MinWidth="275" MinHeight="33" Visibility="Collapsed" />
                                 </StackPanel>
@@ -198,12 +198,12 @@
                     </StackPanel>
                 </StackPanel>
             </PivotItem>
-                <PivotItem x:Name="rates" TabIndex="3" Margin="0,0,0,0">
+                <PivotItem x:Name="detailMap" TabIndex="3" Margin="0,0,0,0">
                     <PivotItem.Header>
-                        <SymbolIcon Symbol="Calculator"></SymbolIcon>
+                        <SymbolIcon Symbol="MapPin"></SymbolIcon>
                     </PivotItem.Header>
-                    <TextBlock Text="Tarif" FontSize="48" />
-                </PivotItem>
+                    <my:MapControl x:Name="mapDetail"  />
+            </PivotItem>
             <PivotItem x:Name="calendar" TabIndex="4" Margin="0,0,0,0">
                 <PivotItem.Header>
                     <SymbolIcon Symbol="Calendar"></SymbolIcon>

@@ -30,11 +30,17 @@ namespace GoyavPlace
             var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
             Object mesure = localSettings.Values["unit"];
             Object apiKey = localSettings.Values["auth_token"];
-            if (mesure != null && ApiKey != null)
+            Object allowDate = localSettings.Values["allowDate"];
+            Object allowMeeting = localSettings.Values["allowMeeting"];
+            if (mesure != null && ApiKey != null && allowDate != null && allowMeeting != null)
             {
-                this.ApiKey.Text = "ApiKey : "+ apiKey.ToString();
+                this.ApiKey.Text = "ApiKey : " + apiKey.ToString();
                 if ((bool)mesure)
                     this.unit.IsOn = true;
+                if ((bool)allowDate)
+                    this.allowDate.IsOn = true;
+                if ((bool)allowMeeting)
+                    this.allowMeeting.IsOn = true;
             }
 
         }
@@ -61,6 +67,45 @@ namespace GoyavPlace
             System.Diagnostics.Debug.WriteLine("Unit :" + unit);
 #endif
 
+        }
+
+        private void changeAllowDate(object sender, RoutedEventArgs e)
+        {
+            //
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            ToggleSwitch toggleSwitch = sender as ToggleSwitch;
+            if (toggleSwitch != null)
+            {
+                if (toggleSwitch.IsOn == true)
+                {
+                    // Meter
+                    localSettings.Values["allowDate"] = true;
+                }
+                else
+                {
+                    // Kilometer
+                    localSettings.Values["allowDate"] = false;
+                }
+            }
+        }
+
+        private void changeAllowMeeting(object sender, RoutedEventArgs e)
+        {
+            var localSettings = Windows.Storage.ApplicationData.Current.LocalSettings;
+            ToggleSwitch toggleSwitch = sender as ToggleSwitch;
+            if (toggleSwitch != null)
+            {
+                if (toggleSwitch.IsOn == true)
+                {
+                    // Meter
+                    localSettings.Values["allowMeeting"] = true;
+                }
+                else
+                {
+                    // Kilometer
+                    localSettings.Values["allowMeeting"] = false;
+                }
+            }
         }
     }
 }
